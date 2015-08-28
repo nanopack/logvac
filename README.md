@@ -14,3 +14,4 @@ Currently uses around 600k of memory while idling.
 | GET /ping | simple ping pong route | nil | `pong` |
 
 ### Notes
+- Currently if na-mist is offline, na-logtap will crash and not recover.
