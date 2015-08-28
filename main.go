@@ -2,7 +2,10 @@
 // vim: ts=4 sw=4 ft=lua noet
 //--------------------------------------------------------------------
 // @author Daniel Barney <daniel@nanobox.io>
-// @copyright 2015, Pagoda Box Inc.
+// Copyright (C) Pagoda Box, Inc - All Rights Reserved
+// Unauthorized copying of this file, via any medium is strictly
+// prohibited. Proprietary and confidential
+//
 // @doc
 //
 // @end
