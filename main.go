@@ -14,10 +14,10 @@
 package main
 
 import (
+	"bitbucket.org/nanobox/na-api"
 	"github.com/boltdb/bolt"
 	"github.com/jcelliott/lumber"
 	"github.com/pagodabox/golang-mist"
-	"github.com/pagodabox/na-api"
 	"github.com/pagodabox/nanobox-config"
 	"github.com/pagodabox/nanobox-logtap"
 	logtapApi "github.com/pagodabox/nanobox-logtap/api"
