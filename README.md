@@ -1,17 +1,21 @@
-# Nanoagent-Logtap
+# Logvac
 
-Nanoagent-Mist is a small log storage and publishing application.
+Simple, lightweight, api-driven log aggregation service with realtime push capabilities and historical persistence.
+
+## Status
+
+Incomplete/Experimental
 
 ## Memory Usage
 
 Currently uses around 600k of memory while idling.
 
-## Routes
 
-| Route | Description | Payload | Output |
-| --- | --- | --- | --- |
-| GET /subscribe/websocket | establishes a websocket connection with Mist | nil | established websocket |
-| GET /ping | simple ping pong route | nil | `pong` |
+## Todo
+
+- Documentation
+- Converge logtap into logvac
+- Tests
 
 ### Notes
 - Currently if na-mist is offline, na-logtap will crash and not recover.
