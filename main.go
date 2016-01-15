@@ -6,6 +6,7 @@ import (
 	"github.com/nanopack/mist/core"
 
 	"github.com/nanopack/logvac/api"
+	"github.com/nanopack/logvac/authenticator"
 	"github.com/nanopack/logvac/core"
 	"github.com/nanopack/logvac/config"
 )
@@ -37,6 +38,7 @@ func main() {
 }
 
 func serverStart() {
+	authenticator.Setup()
 	logVac := logvac.New(config.Log)
 
 	config.Log.Debug("[BOLTDB]Opening at %v\n", config.DbPath)
