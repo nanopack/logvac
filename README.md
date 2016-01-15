@@ -17,11 +17,7 @@ Currently uses around 600k of memory while idling.
 ## Todo
 
 - Documentation
-- Converge logtap into logvac
 - Tests
-
-### Notes
-- Currently if na-mist is offline, na-logtap will crash and not recover.
 
 ### Contributing
 

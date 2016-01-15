@@ -33,7 +33,7 @@ func AddFlags(cmd *cobra.Command) {
 
 
 func Setup(configFile string) {
-	Log.Prefix("[logtap]")
+	Log.Prefix("[logvac]")
 	config := map[string]string{
 		"httpAddress": HttpAddress,
 		"udpAddress":  UdpAddress,

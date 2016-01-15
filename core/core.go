@@ -42,7 +42,7 @@ type (
 	}
 )
 
-// Establishes a new logtap object
+// Establishes a new logvac object
 // and makes sure it has a logger
 func New(log Logger) *Logvac {
 	if log == nil {
@@ -54,7 +54,7 @@ func New(log Logger) *Logvac {
 	}
 }
 
-// Close logtap and remove all drains
+// Close logvac and remove all drains
 func (l *Logvac) Close() {
 	for tag := range l.drains {
 		l.RemoveDrain(tag)

@@ -118,6 +118,6 @@ func (archive *BoltArchive) Write(log Logger, msg Message) {
 	})
 
 	if err != nil {
-		log.Error("[LOGTAP][Historical][write]" + err.Error())
+		log.Error("[Historical][write]" + err.Error())
 	}
 }
