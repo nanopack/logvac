@@ -2,7 +2,10 @@ package authenticator
 
 import (
 	"errors"
+
 	"github.com/boltdb/bolt"
+
+	"github.com/nanopack/logvac/config"
 )
 
 type (
@@ -11,17 +14,20 @@ type (
 	}
 )
 
-func init() {
-	Register("boltdb", boltdb{})
-}
-
-func (b boltdb) Setup(config string) error {
-	db, err := bolt.Open(config, 0600, nil)
+func NewBoltDb(config string) (*boltdb, error) {
+	d, err := bolt.Open(config, 0600, nil)
 	if err != nil {
-		return err
+		return nil, err
+	}
+	b := boltdb{
+		db: d,
 	}
 
-	err = db.Update(func(tx *bolt.Tx) error {
+	return &b, nil
+}
+
+func (b boltdb) initialize() error {
+	err := b.db.Update(func(tx *bolt.Tx) error {
 		_, err := tx.CreateBucketIfNotExists([]byte("tokens"))
 		return err
 	})
@@ -29,12 +35,11 @@ func (b boltdb) Setup(config string) error {
 		return err
 	}
 
-	b.db = db
-
 	return nil
 }
 
-func (b boltdb) Add(token string) error {
+func (b boltdb) add(token string) error {
+	// todo: doesn't fail to write if db gets deleted
 	if b.db == nil {
 		return errors.New("I need to be setup first")
 	}
@@ -44,7 +49,7 @@ func (b boltdb) Add(token string) error {
 	})
 }
 
-func (b boltdb) Remove(token string) error {
+func (b boltdb) remove(token string) error {
 	if b.db == nil {
 		return errors.New("I need to be setup first")
 	}
@@ -54,10 +59,16 @@ func (b boltdb) Remove(token string) error {
 	})
 }
 
-func (b boltdb) Valid(token string) bool {
+func (b boltdb) valid(token string) bool {
 	if b.db == nil {
 		return false
 	}
+
+	if token == "" {
+		config.Log.Trace("Blank token invalid when using authenticator!")
+		return false
+	}
+
 	err := b.db.View(func(tx *bolt.Tx) error {
 		bucket := tx.Bucket([]byte("tokens"))
 		if string(bucket.Get([]byte(token))) != token {

@@ -1,54 +1,86 @@
+// authenticator handles the management of 'X-LOGVAC-KEY's, allowing an
+// authorized user to add, remove, and validate keys for http log collection.
 package authenticator
 
 import (
+	"fmt"
+	"net/url"
+
 	"github.com/nanopack/logvac/config"
 )
 
 type (
-	Authenticator interface {
-		Setup(config string) error
-		Add(token string) error
-		Remove(token string) error
-		Valid(token string) bool
+	Authenticatable interface {
+		initialize() error
+		add(token string) error
+		remove(token string) error
+		valid(token string) bool
 	}
 )
 
 var (
-	availableAuthenticator = map[string]Authenticator{}
-	authenticator          Authenticator
+	authenticator Authenticatable
 )
 
-func Register(name string, a Authenticator) {
-	availableAuthenticator[name] = a
-}
-
-func Setup() error {
-	// todo: refactor to parse authType/config and switch default to none
-	// would get rid of `Register`, although clever
-	var ok bool
-	authenticator, ok = availableAuthenticator[config.AuthType]
-	if ok {
-		config.Log.Debug("Authenticator(%s) config: %s initializing...", config.AuthType, config.AuthConfig)
-		return authenticator.Setup(config.AuthConfig)
+func Init() error {
+	var err error
+	var u *url.URL
+	u, err = url.Parse(config.AuthAddress)
+	if err != nil {
+		return fmt.Errorf("Failed to parse db connection - %v", err)
 	}
+	switch u.Scheme {
+	case "boltdb":
+		authenticator, err = NewBoltDb(u.Path)
+		if err != nil {
+			return err
+		}
+	case "file":
+		authenticator, err = NewBoltDb(u.Path)
+		if err != nil {
+			return err
+		}
+	case "postgresql":
+		authenticator, err = NewPgDb(config.AuthAddress)
+		if err != nil {
+			return err
+		}
+	default:
+		authenticator = nil
+		config.Log.Debug("Authenticator not initialized")
+		return nil
+	}
+	err = authenticator.initialize()
+	if err != nil {
+		return err
+	}
+	config.Log.Debug("Authenticator '%s' initialized", config.AuthAddress)
 	return nil
 }
 
+// Add adds an authorized 'X-LOGVAC-KEY' for http collecting
 func Add(token string) error {
 	if authenticator == nil {
 		return nil
 	}
-	return authenticator.Add(token)
+	config.Log.Trace("Adding token: %v...", token)
+	return authenticator.add(token)
 }
+
+// Remove removes an authorized 'X-LOGVAC-KEY' for http collecting
 func Remove(token string) error {
 	if authenticator == nil {
 		return nil
 	}
-	return authenticator.Remove(token)
+	config.Log.Trace("Removing token: %v...", token)
+	return authenticator.remove(token)
 }
+
+// Valid validates an authorized 'X-LOGVAC-KEY' for http collecting
 func Valid(token string) bool {
 	if authenticator == nil {
 		return true
 	}
-	return authenticator.Valid(token)
+	config.Log.Trace("Validating token: %v...", token)
+	return authenticator.valid(token)
 }

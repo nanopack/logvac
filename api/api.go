@@ -5,6 +5,7 @@ import (
 
 	"github.com/gorilla/pat"
 	"github.com/nanobox-io/nanoauth"
+
 	"github.com/nanopack/logvac/authenticator"
 	"github.com/nanopack/logvac/config"
 )
@@ -32,10 +33,10 @@ func handleRequest(fn http.HandlerFunc) http.HandlerFunc {
 		fn(rw, req)
 
 		// must be after fn if ever going to get rw.status (logging still more meaningful)
-		config.Log.Trace(`%v - [%v] %v %v %v(%s) - "User-Agent: %s", "X-Nanobox-Token: %s"`,
+		config.Log.Trace(`%v - [%v] %v %v %v(%s) - "User-Agent: %s"`,
 			req.RemoteAddr, req.Proto, req.Method, req.RequestURI,
 			rw.Header().Get("status"), req.Header.Get("Content-Length"),
-			req.Header.Get("User-Agent"), req.Header.Get("X-Nanobox-Token"))
+			req.Header.Get("User-Agent"))
 	}
 }
 
