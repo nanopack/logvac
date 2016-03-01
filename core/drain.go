@@ -3,8 +3,9 @@ package logvac
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/jcelliott/lumber"
 	"io"
+
+	"github.com/jcelliott/lumber"
 )
 
 type Publisher interface {

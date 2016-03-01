@@ -1,36 +1,32 @@
 package logvac
 
 import (
-	"github.com/jcelliott/lumber"
-	"io"
 	"io/ioutil"
-	"net"
 	"net/http"
+
+	"github.com/jcelliott/lumber"
+
+	"github.com/nanopack/logvac/config"
 )
 
 // create and return a http handler that can be dropped into an api.
-func GenerateHttpCollector(kind string, l *Logvac) http.HandlerFunc {
+func (l *Logvac) GenerateHttpCollector(kind string) http.HandlerFunc {
 	headerName := "X-" + kind + "-Id"
 	return func(w http.ResponseWriter, r *http.Request) {
 		body, err := ioutil.ReadAll(r.Body)
 		if err != nil {
 			return
 		}
-		logLevel := lumber.LvlInt(r.Header.Get("X-Log-Level"))
+		var level string
+		if r.Header.Get("X-Log-Level") == "" {
+			level = "INFO"
+		}
+		logLevel := lumber.LvlInt(level)
 		header := r.Header.Get(headerName)
 		if header == "" {
 			header = kind
 		}
+		config.Log.Trace("Header: %v, LogLevel: %v, Body: %v", header, logLevel, string(body))
 		l.Publish(header, logLevel, string(body))
 	}
-}
-
-func StartHttpCollector(kind, address string, l *Logvac) (io.Closer, error) {
-	httpListener, err := net.Listen("tcp", address)
-	if err != nil {
-		return nil, err
-	}
-
-	go http.Serve(httpListener, GenerateHttpCollector(kind, l))
-	return httpListener, nil
 }

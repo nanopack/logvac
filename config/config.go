@@ -1,36 +1,37 @@
 package config
 
 import (
-	"io/ioutil"
 	"encoding/json"
+	"io/ioutil"
 
-	"github.com/spf13/cobra"
 	"github.com/jcelliott/lumber"
+	"github.com/spf13/cobra"
 )
 
 var (
 	HttpAddress = ":1234"
-	UdpAddress = ":1234"
+	UdpAddress  = ":1234"
+	TcpAddress  = ":1235"
 	MistAddress = ""
-	LogLevel = "info"
-	DbPath  = "/tmp/logvac.bolt"
-	AuthType = "none"
-	AuthConfig = ""
-	Token = "secret"
-	Log = lumber.NewConsoleLogger(lumber.INFO)
+	LogLevel    = "info"
+	DbPath      = "/tmp/logvac.bolt"
+	AuthType    = "none"
+	AuthConfig  = ""
+	Token       = "secret"
+	Log         lumber.Logger
 )
 
 func AddFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVarP(&HttpAddress, "http-address", "", HttpAddress, "[server] HttpListenAddress")
-	cmd.Flags().StringVarP(&UdpAddress, "udp-address", "", UdpAddress, "[server] UDPListenAddress")
-	cmd.Flags().StringVarP(&MistAddress, "mist-address", "", MistAddress, "[server] MistAddress")
-	cmd.Flags().StringVarP(&LogLevel, "log-level", "", LogLevel, "[server] LogLevel")
-	cmd.Flags().StringVarP(&DbPath, "db-path", "", DbPath, "[server] DbPath")
-	cmd.Flags().StringVarP(&AuthType, "auth-type", "", AuthType, "[server] AuthType")
-	cmd.Flags().StringVarP(&AuthConfig, "auth-config", "", AuthConfig, "[server] AuthConfig")
+	cmd.PersistentFlags().StringVarP(&HttpAddress, "http-address", "", HttpAddress, "[server] HttpListenAddress")
+	cmd.PersistentFlags().StringVarP(&UdpAddress, "udp-address", "", UdpAddress, "[server] UDPListenAddress")
+	cmd.PersistentFlags().StringVarP(&UdpAddress, "tcp-address", "", TcpAddress, "[server] TCPListenAddress")
+	cmd.PersistentFlags().StringVarP(&MistAddress, "mist-address", "", MistAddress, "[server] MistAddress")
+	cmd.PersistentFlags().StringVarP(&LogLevel, "log-level", "", LogLevel, "[server] LogLevel")
+	cmd.PersistentFlags().StringVarP(&DbPath, "db-path", "", DbPath, "[server] DbPath")
+	cmd.PersistentFlags().StringVarP(&AuthType, "auth-type", "", AuthType, "[server] AuthType")
+	cmd.PersistentFlags().StringVarP(&AuthConfig, "auth-config", "", AuthConfig, "[server] AuthConfig")
 	cmd.PersistentFlags().StringVarP(&Token, "token", "", Token, "Token security")
 }
-
 
 func Setup(configFile string) {
 	Log.Prefix("[logvac]")
@@ -58,4 +59,3 @@ func Setup(configFile string) {
 	LogLevel = config["logLevel"]
 	DbPath = config["dbPath"]
 }
-

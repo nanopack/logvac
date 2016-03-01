@@ -12,7 +12,7 @@ import (
 )
 
 type (
-	postgresql struct{
+	postgresql struct {
 		address string
 	}
 )

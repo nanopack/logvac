@@ -15,7 +15,7 @@ type (
 
 var (
 	availableAuthenticator = map[string]Authenticator{}
-	defaultAuthenticator Authenticator
+	defaultAuthenticator   Authenticator
 )
 
 func Register(name string, a Authenticator) {
@@ -27,6 +27,7 @@ func Setup() error {
 	if ok {
 		config.Log.Info("setting up authenticator(%s) config: %s", config.AuthType, config.AuthConfig)
 		defaultAuthenticator = authenticator
+		// just use authenticator ^
 		return authenticator.Setup(config.AuthConfig)
 	}
 	return nil

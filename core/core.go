@@ -1,9 +1,12 @@
 package logvac
 
 import (
-	"github.com/jcelliott/lumber"
 	"sync"
 	"time"
+
+	"github.com/jcelliott/lumber"
+
+	"github.com/nanopack/logvac/config"
 )
 
 type (
@@ -16,7 +19,7 @@ type (
 		Info(string, ...interface{})
 		Debug(string, ...interface{})
 		Trace(string, ...interface{})
-	}	
+	}
 
 	Archive interface {
 		Slice(name string, offset, limit uint64, level int) ([]Message, error)
@@ -105,6 +108,7 @@ func (l *Logvac) Publish(kind string, priority int, content string) {
 // Returns once all drains have received the message, but may not have processed
 // the message yet
 func (l *Logvac) WriteMessage(msg Message) {
+	config.Log.Trace("Writing message - %v...", msg)
 	group := sync.WaitGroup{}
 	for _, drain := range l.drains {
 		group.Add(1)

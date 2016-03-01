@@ -4,7 +4,10 @@ import (
 	"bytes"
 	"encoding/binary"
 	"encoding/json"
+
 	"github.com/boltdb/bolt"
+
+	"github.com/nanopack/logvac/config"
 )
 
 type (
@@ -53,6 +56,7 @@ func (archive *BoltArchive) Slice(name string, offset, limit uint64, level int) 
 		for k, v := c.First(); k != nil && limit > 0; k, v = c.Next() {
 			msg := Message{}
 			if err := json.Unmarshal(v, &msg); err != nil {
+				config.Log.Error("Couldn't unmarshal message") // todo: remove
 				return err
 			}
 			if msg.Priority >= level {
@@ -67,10 +71,12 @@ func (archive *BoltArchive) Slice(name string, offset, limit uint64, level int) 
 	if err != nil {
 		return nil, err
 	}
+	config.Log.Trace("Messages: %v", messages)
 	return messages, nil
 }
 
 func (archive *BoltArchive) Write(log Logger, msg Message) {
+	config.Log.Trace("Bolt archive writing...")
 	err := archive.DB.Update(func(tx *bolt.Tx) error {
 		bucket, err := tx.CreateBucketIfNotExists([]byte(msg.Type))
 		if err != nil {
@@ -118,6 +124,7 @@ func (archive *BoltArchive) Write(log Logger, msg Message) {
 	})
 
 	if err != nil {
+		config.Log.Error("Historical write failed") // todo: remove
 		log.Error("[Historical][write]" + err.Error())
 	}
 }

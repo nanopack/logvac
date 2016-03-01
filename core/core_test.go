@@ -10,9 +10,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/boltdb/bolt"
-	"github.com/jcelliott/lumber"
-	"github.com/nanopack/logvac/core"
+	"io"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -20,9 +18,29 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/boltdb/bolt"
+	"github.com/jcelliott/lumber"
+	"github.com/nanopack/logvac/core"
 )
 
 var log = lumber.NewConsoleLogger(lumber.TRACE)
+
+func StartHttpCollector(kind, address string, l *logvac.Logvac) (io.Closer, error) {
+	httpListener, err := net.Listen("tcp", address)
+	if err != nil {
+		return nil, err
+	}
+
+	go http.Serve(httpListener, l.GenerateHttpCollector(kind))
+	return httpListener, nil
+}
+
+func WriteDrain(writer io.Writer) Drain {
+	return func(log Logger, msg Message) {
+		writer.Write([]byte(fmt.Sprintf("[%s][%s] <%d> %s\n", msg.Type, msg.Time, msg.Priority, msg.Content)))
+	}
+}
 
 func TestBasic(test *testing.T) {
 	logVac := logvac.New(log)
@@ -33,7 +51,7 @@ func TestBasic(test *testing.T) {
 		called = true
 	}
 
-	console := logvac.WriteDrain(os.Stdout)
+	console := WriteDrain(os.Stdout)
 	logVac.AddDrain("testing", console)
 	logVac.AddDrain("fake", testDrain)
 	logVac.Publish("what is this?", lumber.DEBUG, "you should see me!")
@@ -104,7 +122,7 @@ func TestApi(test *testing.T) {
 	go http.ListenAndServe("127.0.0.1:2345", handler)
 
 	// wait for the api to be available
-	time.Sleep(time.Millisecond * 10)
+	time.Sleep(time.Second)
 
 	res, err := http.Get("http://127.0.0.1:2345/")
 	assert(test, err == nil, "%v", err)
@@ -189,7 +207,7 @@ func TestHTTPCollector(test *testing.T) {
 
 	logVac.AddDrain("drain", testDrain)
 
-	go logvac.StartHttpCollector("app", "127.0.0.1:1234", logVac)
+	go StartHttpCollector("app", "127.0.0.1:1234", logVac)
 
 	body := bytes.NewReader([]byte("this is a test"))
 	res, err := http.Post("http://127.0.0.1:1234/upload", "text/plain", body)

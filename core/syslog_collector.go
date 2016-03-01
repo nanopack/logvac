@@ -2,13 +2,14 @@ package logvac
 
 import (
 	"bufio"
-	"github.com/jeromer/syslogparser"
-	"github.com/jeromer/syslogparser/rfc3164"
-	"github.com/jeromer/syslogparser/rfc5424"
 	"io"
 	"net"
 	"strings"
 	"time"
+
+	"github.com/jeromer/syslogparser"
+	"github.com/jeromer/syslogparser/rfc3164"
+	"github.com/jeromer/syslogparser/rfc5424"
 )
 
 type (
@@ -29,7 +30,7 @@ var adjust = []int{
 	1, // Debug         -> DEBUG
 }
 
-// Start begins listening to the syslog port transfers all
+// SyslogUDPStart begins listening to the syslog port, transfers all
 // syslog messages on the wChan
 func SyslogUDPStart(kind, address string, l *Logvac) (io.Closer, error) {
 	parsedAddress, err := net.ResolveUDPAddr("udp", address)
@@ -48,6 +49,7 @@ func SyslogUDPStart(kind, address string, l *Logvac) (io.Closer, error) {
 				return
 			}
 			if remote != nil {
+				// if the number of bytes read is greater than 0
 				if n > 0 {
 					// handle parsing in another process so that this one can continue to receive
 					// UDP packets

@@ -25,7 +25,7 @@ func Start(collector http.HandlerFunc, retriever http.HandlerFunc) error {
 	return nanoauth.ListenAndServeTLS(config.HttpAddress, config.Token, router, "/")
 }
 
-// handleRequest add a bit of logging 
+// handleRequest add a bit of logging
 func handleRequest(fn http.HandlerFunc) http.HandlerFunc {
 	return func(rw http.ResponseWriter, req *http.Request) {
 
@@ -53,7 +53,7 @@ func verify(fn http.HandlerFunc) http.HandlerFunc {
 	return func(rw http.ResponseWriter, req *http.Request) {
 		key := req.Header.Get("X-LOGVAC-KEY")
 		if !authenticator.Valid(key) {
-			rw.WriteHeader(404)
+			rw.WriteHeader(401)
 			return
 		}
 		fn(rw, req)

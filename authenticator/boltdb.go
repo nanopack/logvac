@@ -6,7 +6,7 @@ import (
 )
 
 type (
-	boltdb struct{
+	boltdb struct {
 		db *bolt.DB
 	}
 )
