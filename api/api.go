@@ -20,31 +20,22 @@ func Start(collector http.HandlerFunc, retriever http.HandlerFunc) error {
 	router.Get("/", verify(retriever))
 
 	// blocking...
-	config.Log.Info("Api Listening on %s", config.HttpAddress)
+	config.Log.Info("Api Listening on https://%s...", config.ListenHttp)
 
-	return nanoauth.ListenAndServeTLS(config.HttpAddress, config.Token, router, "/")
+	return nanoauth.ListenAndServeTLS(config.ListenHttp, config.Token, router, "/")
 }
 
 // handleRequest add a bit of logging
 func handleRequest(fn http.HandlerFunc) http.HandlerFunc {
 	return func(rw http.ResponseWriter, req *http.Request) {
 
-		config.Log.Debug(`
-Request:
---------------------------------------------------------------------------------
-%+v
-
-`, req)
-
-		//
 		fn(rw, req)
 
-		config.Log.Debug(`
-Response:
---------------------------------------------------------------------------------
-%+v
-
-`, rw)
+		// must be after fn if ever going to get rw.status (logging still more meaningful)
+		config.Log.Trace(`%v - [%v] %v %v %v(%s) - "User-Agent: %s", "X-Nanobox-Token: %s"`,
+			req.RemoteAddr, req.Proto, req.Method, req.RequestURI,
+			rw.Header().Get("status"), req.Header.Get("Content-Length"),
+			req.Header.Get("User-Agent"), req.Header.Get("X-Nanobox-Token"))
 	}
 }
 

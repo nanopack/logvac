@@ -15,7 +15,7 @@ type (
 
 var (
 	availableAuthenticator = map[string]Authenticator{}
-	defaultAuthenticator   Authenticator
+	authenticator          Authenticator
 )
 
 func Register(name string, a Authenticator) {
@@ -23,31 +23,32 @@ func Register(name string, a Authenticator) {
 }
 
 func Setup() error {
-	authenticator, ok := availableAuthenticator[config.AuthType]
+	// todo: refactor to parse authType/config and switch default to none
+	// would get rid of `Register`, although clever
+	var ok bool
+	authenticator, ok = availableAuthenticator[config.AuthType]
 	if ok {
-		config.Log.Info("setting up authenticator(%s) config: %s", config.AuthType, config.AuthConfig)
-		defaultAuthenticator = authenticator
-		// just use authenticator ^
+		config.Log.Debug("Authenticator(%s) config: %s initializing...", config.AuthType, config.AuthConfig)
 		return authenticator.Setup(config.AuthConfig)
 	}
 	return nil
 }
 
 func Add(token string) error {
-	if defaultAuthenticator == nil {
+	if authenticator == nil {
 		return nil
 	}
-	return defaultAuthenticator.Add(token)
+	return authenticator.Add(token)
 }
 func Remove(token string) error {
-	if defaultAuthenticator == nil {
+	if authenticator == nil {
 		return nil
 	}
-	return defaultAuthenticator.Remove(token)
+	return authenticator.Remove(token)
 }
 func Valid(token string) bool {
-	if defaultAuthenticator == nil {
+	if authenticator == nil {
 		return true
 	}
-	return defaultAuthenticator.Valid(token)
+	return authenticator.Valid(token)
 }

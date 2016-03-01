@@ -4,8 +4,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/jcelliott/lumber"
-
 	"github.com/nanopack/logvac/config"
 )
 
@@ -21,12 +19,6 @@ type (
 		Trace(string, ...interface{})
 	}
 
-	Archive interface {
-		Slice(name string, offset, limit uint64, level int) ([]Message, error)
-	}
-
-	Drain func(Logger, Message)
-
 	Message struct {
 		Type     string
 		Time     time.Time `json:"time"`
@@ -35,9 +27,11 @@ type (
 	}
 
 	Logvac struct {
-		log    Logger
 		drains map[string]drainChannels
 	}
+
+	// Drain is a function that "drains a Message"
+	Drain func(Message)
 
 	drainChannels struct {
 		send chan Message
@@ -45,27 +39,34 @@ type (
 	}
 )
 
-// Establishes a new logvac object
-// and makes sure it has a logger
-func New(log Logger) *Logvac {
-	if log == nil {
-		log = lumber.NewConsoleLogger(lumber.ERROR)
-	}
-	return &Logvac{
-		log:    log,
+var Vac Logvac
+
+// Initializes a logvac object
+func Init() error {
+	Vac = Logvac{
 		drains: make(map[string]drainChannels),
 	}
+	config.Log.Debug("Logvac initialized")
+	return nil
 }
 
 // Close logvac and remove all drains
-func (l *Logvac) Close() {
+func Close() {
+	Vac.close()
+}
+
+func (l *Logvac) close() {
 	for tag := range l.drains {
-		l.RemoveDrain(tag)
+		l.removeDrain(tag)
 	}
 }
 
 // AddDrain addes a drain to the listeners and sets its logger
-func (l *Logvac) AddDrain(tag string, drain Drain) {
+func AddDrain(tag string, drain Drain) {
+	Vac.addDrain(tag, drain)
+}
+
+func (l *Logvac) addDrain(tag string, drain Drain) {
 	channels := drainChannels{
 		done: make(chan bool),
 		send: make(chan Message),
@@ -77,7 +78,7 @@ func (l *Logvac) AddDrain(tag string, drain Drain) {
 			case <-channels.done:
 				return
 			case msg := <-channels.send:
-				drain(l.log, msg)
+				drain(msg)
 			}
 		}
 	}()
@@ -86,7 +87,11 @@ func (l *Logvac) AddDrain(tag string, drain Drain) {
 }
 
 // RemoveDrain drops a drain
-func (l *Logvac) RemoveDrain(tag string) {
+func RemoveDrain(tag string) {
+	Vac.removeDrain(tag)
+}
+
+func (l *Logvac) removeDrain(tag string) {
 	drain, ok := l.drains[tag]
 	if ok {
 		close(drain.done)
@@ -94,20 +99,29 @@ func (l *Logvac) RemoveDrain(tag string) {
 	}
 }
 
-func (l *Logvac) Publish(kind string, priority int, content string) {
+// Publish publishes collected Message to all drains
+func Publish(kind string, priority int, content string) {
+	Vac.publish(kind, priority, content)
+}
+
+func (l *Logvac) publish(kind string, priority int, content string) {
 	m := Message{
 		Type:     kind,
 		Time:     time.Now(),
 		Priority: priority,
 		Content:  content,
 	}
-	l.WriteMessage(m)
+	l.writeMessage(m)
 }
 
 // WriteMessage broadcasts to all drains in seperate go routines
 // Returns once all drains have received the message, but may not have processed
 // the message yet
-func (l *Logvac) WriteMessage(msg Message) {
+func WriteMessage(msg Message) {
+	Vac.writeMessage(msg)
+}
+
+func (l *Logvac) writeMessage(msg Message) {
 	config.Log.Trace("Writing message - %v...", msg)
 	group := sync.WaitGroup{}
 	for _, drain := range l.drains {

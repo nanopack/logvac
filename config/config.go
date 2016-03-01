@@ -9,39 +9,55 @@ import (
 )
 
 var (
-	HttpAddress = ":1234"
-	UdpAddress  = ":1234"
-	TcpAddress  = ":1235"
-	MistAddress = ""
-	LogLevel    = "info"
-	DbPath      = "/tmp/logvac.bolt"
-	AuthType    = "none"
-	AuthConfig  = ""
-	Token       = "secret"
-	Log         lumber.Logger
+	// collectors
+	ListenHttp = "127.0.0.1:1234"
+	ListenUdp  = "127.0.0.1:1234"
+	ListenTcp  = "127.0.0.1:1235"
+
+	// drains
+	PubAddress = ""
+	DbAddress  = "file:///tmp/logvac.bolt"
+
+	// authenticator
+	// todo: needs update
+	AuthType   = "none" // type of backend to check against ('boltdb' or 'postgresql')
+	AuthConfig = ""     // address or file location of auth backend
+
+	// other
+	LogLevel = "info"
+	Token    = "secret"
+	Log      lumber.Logger
 )
 
 func AddFlags(cmd *cobra.Command) {
-	cmd.PersistentFlags().StringVarP(&HttpAddress, "http-address", "", HttpAddress, "[server] HttpListenAddress")
-	cmd.PersistentFlags().StringVarP(&UdpAddress, "udp-address", "", UdpAddress, "[server] UDPListenAddress")
-	cmd.PersistentFlags().StringVarP(&UdpAddress, "tcp-address", "", TcpAddress, "[server] TCPListenAddress")
-	cmd.PersistentFlags().StringVarP(&MistAddress, "mist-address", "", MistAddress, "[server] MistAddress")
-	cmd.PersistentFlags().StringVarP(&LogLevel, "log-level", "", LogLevel, "[server] LogLevel")
-	cmd.PersistentFlags().StringVarP(&DbPath, "db-path", "", DbPath, "[server] DbPath")
-	cmd.PersistentFlags().StringVarP(&AuthType, "auth-type", "", AuthType, "[server] AuthType")
-	cmd.PersistentFlags().StringVarP(&AuthConfig, "auth-config", "", AuthConfig, "[server] AuthConfig")
+	// collectors
+	cmd.PersistentFlags().StringVarP(&ListenHttp, "listen-http", "", ListenHttp, "API listen address (same endpoint for http log collection)")
+	cmd.PersistentFlags().StringVarP(&ListenUdp, "listen-udp", "", ListenUdp, "UDP log collection endpoint")
+	cmd.PersistentFlags().StringVarP(&ListenTcp, "listen-tcp", "", ListenTcp, "TCP log collection endpoint")
+
+	// drains
+	cmd.PersistentFlags().StringVarP(&PubAddress, "pub-address", "", PubAddress, "Log publisher (mist) address")
+	cmd.PersistentFlags().StringVarP(&DbAddress, "db-address", "", DbAddress, "Log storage address")
+
+	// authenticator
+	cmd.PersistentFlags().StringVarP(&AuthType, "auth-type", "", AuthType, "Type of backend to authenticate against ('boltdb' or 'postgresql')")
+	cmd.PersistentFlags().StringVarP(&AuthConfig, "auth-config", "", AuthConfig, "Address or file location of auth-type")
+
+	// other
+	cmd.PersistentFlags().StringVarP(&LogLevel, "log-level", "", LogLevel, "LogLevel")
 	cmd.PersistentFlags().StringVarP(&Token, "token", "", Token, "Token security")
 }
 
+// todo: use viper
 func Setup(configFile string) {
 	Log.Prefix("[logvac]")
 	config := map[string]string{
-		"httpAddress": HttpAddress,
-		"udpAddress":  UdpAddress,
-		"mistAddress": MistAddress,
-		"logLevel":    LogLevel,
-		"dbPath":      DbPath,
-		"token":       Token,
+		"listenHttp": ListenHttp,
+		"listenUdp":  ListenUdp,
+		"pubAddress": PubAddress,
+		"logLevel":   LogLevel,
+		"dbAddress":  DbAddress,
+		"token":      Token,
 	}
 
 	b, err := ioutil.ReadFile(configFile)
@@ -53,9 +69,10 @@ func Setup(configFile string) {
 		Log.Error("unable to parse json config: %v", err)
 		return
 	}
-	HttpAddress = config["httpAddress"]
-	UdpAddress = config["udpAddress"]
-	MistAddress = config["mistAddress"]
+	ListenHttp = config["listenHttp"]
+	ListenUdp = config["listenUdp"]
+	PubAddress = config["pubAddress"]
 	LogLevel = config["logLevel"]
-	DbPath = config["dbPath"]
+	DbAddress = config["dbAddress"]
+	Token = config["token"]
 }

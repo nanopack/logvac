@@ -1,5 +1,5 @@
-[![logvac logo](http://nano-assets.gopagoda.io/readme-headers/logvac.png)](http://nanobox.io/open-source#logvac)
- [![Build Status](https://travis-ci.org/nanopack/logvac.svg)](https://travis-ci.org/nanopack/logvac)
+[![logvac logo](http://nano-assets.gopagoda.io/readme-headers/logvac.png)](http://nanobox.io/open-source#logvac)  
+[![Build Status](https://travis-ci.org/nanopack/logvac.svg)](https://travis-ci.org/nanopack/logvac)
 
 # Logvac
 
@@ -12,7 +12,6 @@ Incomplete/Experimental
 ## Memory Usage
 
 Currently uses around 600k of memory while idling.
-
 
 ## Todo
 

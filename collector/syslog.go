@@ -1,4 +1,4 @@
-package logvac
+package collector
 
 import (
 	"bufio"
@@ -10,9 +10,12 @@ import (
 	"github.com/jeromer/syslogparser"
 	"github.com/jeromer/syslogparser/rfc3164"
 	"github.com/jeromer/syslogparser/rfc5424"
+
+	"github.com/nanopack/logvac/core"
 )
 
 type (
+	// fakeSyslog is a catch-all for non-rfc data collected
 	fakeSyslog struct {
 		data []byte
 	}
@@ -32,7 +35,7 @@ var adjust = []int{
 
 // SyslogUDPStart begins listening to the syslog port, transfers all
 // syslog messages on the wChan
-func SyslogUDPStart(kind, address string, l *Logvac) (io.Closer, error) {
+func SyslogUDPStart(kind, address string) (io.Closer, error) {
 	parsedAddress, err := net.ResolveUDPAddr("udp", address)
 	if err != nil {
 		return nil, err
@@ -56,7 +59,7 @@ func SyslogUDPStart(kind, address string, l *Logvac) (io.Closer, error) {
 					go func(buf []byte) {
 						msg := parseMessage(buf[0:n])
 						msg.Type = kind
-						l.WriteMessage(msg)
+						logvac.WriteMessage(msg)
 					}(buf)
 				}
 			}
@@ -66,7 +69,7 @@ func SyslogUDPStart(kind, address string, l *Logvac) (io.Closer, error) {
 	return socket, nil
 }
 
-func SyslogTCPStart(kind, address string, l *Logvac) (io.Closer, error) {
+func SyslogTCPStart(kind, address string) (io.Closer, error) {
 	serverSocket, err := net.Listen("tcp", address)
 	if err != nil {
 		return nil, err
@@ -78,13 +81,13 @@ func SyslogTCPStart(kind, address string, l *Logvac) (io.Closer, error) {
 			if err != nil {
 				return
 			}
-			go handleConnection(conn, kind, l)
+			go handleConnection(conn, kind)
 		}
 	}()
 	return serverSocket, nil
 }
 
-func handleConnection(conn net.Conn, kind string, l *Logvac) {
+func handleConnection(conn net.Conn, kind string) {
 	r := bufio.NewReader(conn)
 
 	for {
@@ -100,7 +103,7 @@ func handleConnection(conn net.Conn, kind string, l *Logvac) {
 		}
 		msg := parseMessage([]byte(line))
 		msg.Type = kind
-		l.WriteMessage(msg)
+		logvac.WriteMessage(msg)
 	}
 }
 
@@ -108,7 +111,7 @@ func handleConnection(conn net.Conn, kind string, l *Logvac) {
 // if the msg is not parsable or a standard formatted syslog message
 // it will drop the whole message into the content and make up a timestamp
 // and a severity
-func parseMessage(b []byte) (msg Message) {
+func parseMessage(b []byte) (msg logvac.Message) {
 	parsers := make([]syslogparser.LogParser, 3)
 	parsers[0] = rfc3164.NewParser(b)
 	parsers[1] = rfc5424.NewParser(b)

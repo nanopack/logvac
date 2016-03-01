@@ -1,4 +1,4 @@
-package logvac
+package drain
 
 import (
 	"bytes"
@@ -8,6 +8,7 @@ import (
 	"github.com/boltdb/bolt"
 
 	"github.com/nanopack/logvac/config"
+	"github.com/nanopack/logvac/core"
 )
 
 type (
@@ -18,6 +19,7 @@ type (
 )
 
 func NewBoltArchive(path string) (*BoltArchive, error) {
+	config.Log.Debug("[BOLTDB] Opening at %v...", path)
 	db, err := bolt.Open(path, 0600, nil)
 	if err != nil {
 		return nil, err
@@ -25,16 +27,23 @@ func NewBoltArchive(path string) (*BoltArchive, error) {
 
 	archive := BoltArchive{
 		DB:            db,
-		MaxBucketSize: 1000,
+		MaxBucketSize: 10000, // this should be configurable
 	}
 
 	return &archive, nil
 }
 
-func (archive *BoltArchive) Slice(name string, offset, limit uint64, level int) ([]Message, error) {
-	var messages []Message
+func (archive *BoltArchive) Init() error {
+	// add drain
+	logvac.AddDrain("historical", archive.Write)
+
+	return nil
+}
+
+func (archive *BoltArchive) Slice(name string, offset, limit uint64, level int) ([]logvac.Message, error) {
+	var messages []logvac.Message
 	err := archive.DB.View(func(tx *bolt.Tx) error {
-		messages = make([]Message, 0)
+		messages = make([]logvac.Message, 0)
 		bucket := tx.Bucket([]byte(name))
 
 		if bucket == nil {
@@ -54,7 +63,7 @@ func (archive *BoltArchive) Slice(name string, offset, limit uint64, level int) 
 
 		c.Seek(initial.Bytes())
 		for k, v := c.First(); k != nil && limit > 0; k, v = c.Next() {
-			msg := Message{}
+			msg := logvac.Message{}
 			if err := json.Unmarshal(v, &msg); err != nil {
 				config.Log.Error("Couldn't unmarshal message") // todo: remove
 				return err
@@ -75,7 +84,7 @@ func (archive *BoltArchive) Slice(name string, offset, limit uint64, level int) 
 	return messages, nil
 }
 
-func (archive *BoltArchive) Write(log Logger, msg Message) {
+func (archive *BoltArchive) Write(msg logvac.Message) {
 	config.Log.Trace("Bolt archive writing...")
 	err := archive.DB.Update(func(tx *bolt.Tx) error {
 		bucket, err := tx.CreateBucketIfNotExists([]byte(msg.Type))
@@ -124,7 +133,6 @@ func (archive *BoltArchive) Write(log Logger, msg Message) {
 	})
 
 	if err != nil {
-		config.Log.Error("Historical write failed") // todo: remove
-		log.Error("[Historical][write]" + err.Error())
+		config.Log.Error("Historical write failed - %v", err.Error())
 	}
 }
