@@ -85,6 +85,7 @@ func (archive *BoltArchive) Slice(name string, offset, limit uint64, level int) 
 }
 
 func (archive *BoltArchive) Write(msg logvac.Message) {
+	// todo: rethink/refactor how logs are written in order to accomodate tag/text search
 	config.Log.Trace("Bolt archive writing...")
 	err := archive.DB.Update(func(tx *bolt.Tx) error {
 		bucket, err := tx.CreateBucketIfNotExists([]byte(msg.Type))

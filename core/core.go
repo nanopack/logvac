@@ -20,6 +20,8 @@ type (
 	}
 
 	Message struct {
+		Hostname string `json:"hostname"` // may not want to specify json, mist may not love
+		Tag      string // []string?
 		Type     string
 		Time     time.Time `json:"time"`
 		Priority int       `json:"priority"`

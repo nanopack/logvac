@@ -11,6 +11,7 @@ import (
 	"github.com/jeromer/syslogparser/rfc3164"
 	"github.com/jeromer/syslogparser/rfc5424"
 
+	"github.com/nanopack/logvac/config"
 	"github.com/nanopack/logvac/core"
 )
 
@@ -35,14 +36,14 @@ var adjust = []int{
 
 // SyslogUDPStart begins listening to the syslog port, transfers all
 // syslog messages on the wChan
-func SyslogUDPStart(kind, address string) (io.Closer, error) {
+func SyslogUDPStart(kind, address string) error {
 	parsedAddress, err := net.ResolveUDPAddr("udp", address)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	socket, err := net.ListenUDP("udp", parsedAddress)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	go func() {
 		var buf []byte = make([]byte, 1024)
@@ -66,13 +67,13 @@ func SyslogUDPStart(kind, address string) (io.Closer, error) {
 		}
 	}()
 
-	return socket, nil
+	return nil
 }
 
-func SyslogTCPStart(kind, address string) (io.Closer, error) {
+func SyslogTCPStart(kind, address string) error {
 	serverSocket, err := net.Listen("tcp", address)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	go func() {
@@ -84,7 +85,7 @@ func SyslogTCPStart(kind, address string) (io.Closer, error) {
 			go handleConnection(conn, kind)
 		}
 	}()
-	return serverSocket, nil
+	return nil
 }
 
 func handleConnection(conn net.Conn, kind string) {
@@ -112,15 +113,21 @@ func handleConnection(conn net.Conn, kind string) {
 // it will drop the whole message into the content and make up a timestamp
 // and a severity
 func parseMessage(b []byte) (msg logvac.Message) {
+	config.Log.Trace("Raw syslog message: %v", string(b))
 	parsers := make([]syslogparser.LogParser, 3)
 	parsers[0] = rfc3164.NewParser(b)
 	parsers[1] = rfc5424.NewParser(b)
 	parsers[2] = &fakeSyslog{b}
 
 	for _, parser := range parsers {
+		config.Log.Trace("Trying Parser...")
 		err := parser.Parse()
 		if err == nil {
+			// todo: handle rfc5424 'message' and 'app_name' fields (correspond to content and tag)
 			parsedData := parser.Dump()
+			config.Log.Trace("Parsed data: %v", parsedData)
+			msg.Hostname = parsedData["hostname"].(string)
+			msg.Tag = parsedData["tag"].(string)
 			msg.Time = parsedData["timestamp"].(time.Time)
 			msg.Priority = adjust[parsedData["severity"].(int)] // parser guarantees [0,7]
 			tag, ok := parsedData["tag"]

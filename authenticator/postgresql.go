@@ -8,6 +8,7 @@ package authenticator
 
 import (
 	"database/sql"
+
 	_ "github.com/lib/pq"
 )
 

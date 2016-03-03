@@ -14,8 +14,7 @@ var (
 
 func Init() error {
 	if config.ListenTcp != "" {
-		tcpCollector, err := SyslogTCPStart("app", config.ListenTcp)
-		defer tcpCollector.Close()
+		err := SyslogTCPStart("app", config.ListenTcp)
 		if err != nil {
 			return err
 		}
@@ -23,8 +22,7 @@ func Init() error {
 	}
 
 	if config.ListenUdp != "" {
-		udpCollector, err := SyslogUDPStart("app", config.ListenUdp)
-		defer udpCollector.Close()
+		err := SyslogUDPStart("app", config.ListenUdp)
 		if err != nil {
 			return err
 		}

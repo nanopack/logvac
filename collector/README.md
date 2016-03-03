@@ -6,6 +6,7 @@
 Simple, lightweight, api-driven log aggregation service with realtime push capabilities and historical persistence.
 
 ## Usage
+
 Logvac can receive logs from rsyslog
 >/etc/rsyslog.d/01-logvac-example.conf
 >```
