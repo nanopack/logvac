@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"encoding/json"
+	"fmt"
 
 	"github.com/boltdb/bolt"
 
@@ -40,8 +41,9 @@ func (archive *BoltArchive) Init() error {
 	return nil
 }
 
-func (archive *BoltArchive) Slice(name string, offset, limit uint64, level int) ([]logvac.Message, error) {
+func (archive *BoltArchive) Slice(name, host, tag string, offset, limit uint64, level int) ([]logvac.Message, error) {
 	var messages []logvac.Message
+
 	err := archive.DB.View(func(tx *bolt.Tx) error {
 		messages = make([]logvac.Message, 0)
 		bucket := tx.Bucket([]byte(name))
@@ -55,7 +57,7 @@ func (archive *BoltArchive) Slice(name string, offset, limit uint64, level int) 
 			return nil
 		}
 
-		// I need to skip to the correct id
+		// skip to the correct id
 		initial := &bytes.Buffer{}
 		if err := binary.Write(initial, binary.BigEndian, offset); err != nil {
 			return err
@@ -65,27 +67,29 @@ func (archive *BoltArchive) Slice(name string, offset, limit uint64, level int) 
 		for k, v := c.First(); k != nil && limit > 0; k, v = c.Next() {
 			msg := logvac.Message{}
 			if err := json.Unmarshal(v, &msg); err != nil {
-				config.Log.Error("Couldn't unmarshal message") // todo: remove
-				return err
+				return fmt.Errorf("Couldn't unmarshal message", err)
 			}
 			if msg.Priority >= level {
-				limit--
-				messages = append(messages, msg)
+				if msg.Id == host || host == "" {
+					if msg.Tag == tag || tag == "" {
+						limit--
+						messages = append(messages, msg)
+					}
+				}
 			}
 		}
 
 		return nil
 	})
-
 	if err != nil {
 		return nil, err
 	}
+
 	config.Log.Trace("Messages: %v", messages)
 	return messages, nil
 }
 
 func (archive *BoltArchive) Write(msg logvac.Message) {
-	// todo: rethink/refactor how logs are written in order to accomodate tag/text search
 	config.Log.Trace("Bolt archive writing...")
 	err := archive.DB.Update(func(tx *bolt.Tx) error {
 		bucket, err := tx.CreateBucketIfNotExists([]byte(msg.Type))

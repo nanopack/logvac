@@ -2,15 +2,14 @@ package collector
 
 import (
 	"bufio"
-	"encoding/json"
 	"io"
 	"net"
 	"strings"
 	"time"
 
-	"github.com/jeromer/syslogparser"
-	"github.com/jeromer/syslogparser/rfc3164"
-	"github.com/jeromer/syslogparser/rfc5424"
+	"github.com/nanobox-io/golang-syslogparser"
+	"github.com/nanobox-io/golang-syslogparser/rfc3164"
+	"github.com/nanobox-io/golang-syslogparser/rfc5424"
 
 	"github.com/nanopack/logvac/config"
 	"github.com/nanopack/logvac/core"
@@ -20,12 +19,6 @@ type (
 	// fakeSyslog is a catch-all for non-rfc data collected
 	fakeSyslog struct {
 		data []byte
-	}
-
-	// todo: make message parser to handle '['
-	narc struct {
-		data    []byte
-		message logvac.Message
 	}
 )
 
@@ -122,10 +115,9 @@ func handleConnection(conn net.Conn) {
 func parseMessage(b []byte) (msg logvac.Message) {
 	config.Log.Trace("Raw syslog message: %v", string(b))
 	parsers := make([]syslogparser.LogParser, 4)
-	parsers[0] = &narc{data: b}
-	parsers[1] = rfc3164.NewParser(b)
-	parsers[2] = rfc5424.NewParser(b)
-	parsers[3] = &fakeSyslog{b}
+	parsers[0] = rfc3164.NewParser(b)
+	parsers[1] = rfc5424.NewParser(b)
+	parsers[2] = &fakeSyslog{b}
 
 	for _, parser := range parsers {
 		config.Log.Trace("Trying Parser...")
@@ -158,33 +150,5 @@ func (fake *fakeSyslog) Dump() syslogparser.LogParts {
 }
 
 func (fake *fakeSyslog) Location(loc *time.Location) {
-	return
-}
-
-// message parser for narc
-func (n *narc) Parse() error {
-	var value logvac.Message
-	// todo: dummy, implement an actual parsing, its a raw string (see syslogparser)
-	// "<83>Mar 04 17:24:41 web1 apache[error] this is an importnt log"
-	var err error
-	err = json.Unmarshal(n.data, &value)
-	if err != nil {
-		config.Log.Trace("Failed to unmarshal '%q'- %v", n.data, err)
-		return err
-	}
-	n.message = value
-	return nil
-}
-
-func (n *narc) Dump() syslogparser.LogParts {
-	parsed := make(map[string]interface{}, 4)
-	parsed["hostname"] = n.message.Id
-	parsed["tag"] = n.message.Tag
-	parsed["severity"] = n.message.Priority
-	parsed["content"] = n.message.Content
-	return parsed
-}
-
-func (n *narc) Location(loc *time.Location) {
 	return
 }

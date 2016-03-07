@@ -50,13 +50,17 @@ func GenerateHttpCollector() http.HandlerFunc {
 func GenerateArchiveEndpoint(archive drain.ArchiverDrain) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
 		query := req.URL.Query()
-		name := query.Get("kind")
-		if name == "" {
-			name = "app"
+
+		host := query.Get("id")
+		tag := query.Get("tag")
+
+		kind := query.Get("type")
+		if kind == "" {
+			kind = "app"
 		}
-		offset := query.Get("offset")
-		if offset == "" {
-			offset = "0"
+		start := query.Get("start")
+		if start == "" {
+			start = "0"
 		}
 		limit := query.Get("limit")
 		if limit == "" {
@@ -64,14 +68,14 @@ func GenerateArchiveEndpoint(archive drain.ArchiverDrain) http.HandlerFunc {
 		}
 		level := query.Get("level")
 		if level == "" {
-			level = "INFO"
+			level = "TRACE"
 		}
-		config.Log.Trace("name: %v, offset: %v, limit: %v, level: %v", name, offset, limit, level)
+		config.Log.Trace("type: %v, start: %v, limit: %v, level: %v, id: %v, tag: %v", kind, start, limit, level, host, tag)
 		logLevel := lumber.LvlInt(level)
-		realOffset, err := strconv.Atoi(offset)
+		realOffset, err := strconv.Atoi(start)
 		if err != nil {
 			res.WriteHeader(500)
-			res.Write([]byte("bad offset"))
+			res.Write([]byte("bad start offset"))
 			return
 		}
 		realLimit, err := strconv.Atoi(limit)
@@ -80,7 +84,7 @@ func GenerateArchiveEndpoint(archive drain.ArchiverDrain) http.HandlerFunc {
 			res.Write([]byte("bad limit"))
 			return
 		}
-		slices, err := archive.Slice(name, uint64(realOffset), uint64(realLimit), logLevel)
+		slices, err := archive.Slice(kind, host, tag, uint64(realOffset), uint64(realLimit), logLevel)
 		if err != nil {
 			res.WriteHeader(500)
 			res.Write([]byte(err.Error()))
@@ -92,7 +96,6 @@ func GenerateArchiveEndpoint(archive drain.ArchiverDrain) http.HandlerFunc {
 			res.Write([]byte(err.Error()))
 			return
 		}
-		config.Log.Trace("Body: %s", string(body))
 
 		res.WriteHeader(200)
 		res.Write(append(body, byte('\n')))

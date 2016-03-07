@@ -16,7 +16,7 @@ type (
 	ArchiverDrain interface {
 		Init() error
 		// Slice returns a slice of logs based on the name, offset, limit, and log-level
-		Slice(name string, offset, limit uint64, level int) ([]logvac.Message, error)
+		Slice(name, host, tag string, offset, limit uint64, level int) ([]logvac.Message, error)
 		// Write writes the message to database
 		Write(msg logvac.Message)
 	}

@@ -1,7 +1,9 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
+	"regexp"
 
 	"github.com/gorilla/pat"
 	"github.com/nanobox-io/nanoauth" // todo: use golang-nanoauth
@@ -17,8 +19,8 @@ func Start(collector http.HandlerFunc, retriever http.HandlerFunc) error {
 	router.Get("/add-key", handleRequest(addKey))
 	router.Get("/remove-key", handleRequest(removeKey))
 
-	router.Post("/", verify(collector))
-	router.Get("/", verify(retriever))
+	router.Post("/", verify(handleRequest(collector)))
+	router.Get("/", verify(handleRequest(retriever)))
 
 	// blocking...
 	config.Log.Info("Api Listening on https://%s...", config.ListenHttp)
@@ -32,10 +34,20 @@ func handleRequest(fn http.HandlerFunc) http.HandlerFunc {
 
 		fn(rw, req)
 
-		// must be after fn if ever going to get rw.status (logging still more meaningful)
-		config.Log.Trace(`%v - [%v] %v %v %v(%s) - "User-Agent: %s"`,
+		// must be after req returns
+		getStatus := func(trw http.ResponseWriter) string {
+			r, _ := regexp.Compile("status:([0-9]{3})")
+			return r.FindStringSubmatch(fmt.Sprintf("%+v", trw))[1]
+		}
+
+		getWrote := func(trw http.ResponseWriter) string {
+			r, _ := regexp.Compile("written:([0-9]*)")
+			return r.FindStringSubmatch(fmt.Sprintf("%+v", trw))[1]
+		}
+
+		config.Log.Debug(`%v - [%v] %v %v %v(%s) - "User-Agent: %s"`,
 			req.RemoteAddr, req.Proto, req.Method, req.RequestURI,
-			rw.Header().Get("status"), req.Header.Get("Content-Length"),
+			getStatus(rw), getWrote(rw), // %v(%s)
 			req.Header.Get("User-Agent"))
 	}
 }
