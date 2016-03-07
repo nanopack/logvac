@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/pat"
-	"github.com/nanobox-io/nanoauth"
+	"github.com/nanobox-io/nanoauth" // todo: use golang-nanoauth
 
 	"github.com/nanopack/logvac/authenticator"
 	"github.com/nanopack/logvac/config"

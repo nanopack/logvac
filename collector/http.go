@@ -22,24 +22,28 @@ import (
 type Http struct{}
 
 // create and return a http handler that can be dropped into an api.
-func GenerateHttpCollector(kind string) http.HandlerFunc {
-	headerName := "X-" + kind + "-Id"
+func GenerateHttpCollector() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		body, err := ioutil.ReadAll(r.Body)
 		if err != nil {
 			return
 		}
-		var level string
-		if r.Header.Get("X-Log-Level") == "" {
-			level = "INFO"
+		// todo make sure we parse the (expected) json body
+		var msg logvac.Message
+		err = json.Unmarshal(body, &msg)
+		if err != nil {
+			// todo: keep body as "message" and make up other Message.bits
+			w.WriteHeader(400)
+			return
 		}
-		logLevel := lumber.LvlInt(level)
-		header := r.Header.Get(headerName)
-		if header == "" {
-			header = kind
+
+		if msg.Type == "" {
+			msg.Type = config.MsgType
 		}
-		config.Log.Trace("Header: %v, LogLevel: %v, Body: %v", header, logLevel, string(body))
-		logvac.Publish(header, logLevel, string(body))
+
+		config.Log.Trace("Message: %+v", msg)
+		logvac.WriteMessage(msg)
+		// logvac.Publish(header, logLevel, string(body))
 	}
 }
 

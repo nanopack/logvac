@@ -8,6 +8,7 @@ package authenticator
 
 import (
 	"database/sql"
+	"io"
 
 	_ "github.com/lib/pq"
 )
@@ -79,4 +80,12 @@ func (p postgresql) exec(query string, args ...interface{}) (sql.Result, error) 
 	defer client.Close()
 
 	return client.Exec(query, args...)
+}
+
+func (p postgresql) exportLogvac(exportWriter io.Writer) error {
+	return nil
+}
+
+func (p postgresql) importLogvac(importReader io.Reader) error {
+	return nil
 }

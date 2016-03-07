@@ -2,6 +2,7 @@ package collector
 
 import (
 	"bufio"
+	"encoding/json"
 	"io"
 	"net"
 	"strings"
@@ -20,6 +21,12 @@ type (
 	fakeSyslog struct {
 		data []byte
 	}
+
+	// todo: make message parser to handle '['
+	narc struct {
+		data    []byte
+		message logvac.Message
+	}
 )
 
 //Map syslog levels to logging levels (FYI, they don't really match well)
@@ -36,7 +43,7 @@ var adjust = []int{
 
 // SyslogUDPStart begins listening to the syslog port, transfers all
 // syslog messages on the wChan
-func SyslogUDPStart(kind, address string) error {
+func SyslogUDPStart(address string) error {
 	parsedAddress, err := net.ResolveUDPAddr("udp", address)
 	if err != nil {
 		return err
@@ -59,7 +66,7 @@ func SyslogUDPStart(kind, address string) error {
 					// UDP packets
 					go func(buf []byte) {
 						msg := parseMessage(buf[0:n])
-						msg.Type = kind
+						msg.Type = config.MsgType
 						logvac.WriteMessage(msg)
 					}(buf)
 				}
@@ -70,7 +77,7 @@ func SyslogUDPStart(kind, address string) error {
 	return nil
 }
 
-func SyslogTCPStart(kind, address string) error {
+func SyslogTCPStart(address string) error {
 	serverSocket, err := net.Listen("tcp", address)
 	if err != nil {
 		return err
@@ -82,13 +89,13 @@ func SyslogTCPStart(kind, address string) error {
 			if err != nil {
 				return
 			}
-			go handleConnection(conn, kind)
+			go handleConnection(conn)
 		}
 	}()
 	return nil
 }
 
-func handleConnection(conn net.Conn, kind string) {
+func handleConnection(conn net.Conn) {
 	r := bufio.NewReader(conn)
 
 	for {
@@ -103,7 +110,7 @@ func handleConnection(conn net.Conn, kind string) {
 			continue
 		}
 		msg := parseMessage([]byte(line))
-		msg.Type = kind
+		msg.Type = config.MsgType
 		logvac.WriteMessage(msg)
 	}
 }
@@ -114,10 +121,11 @@ func handleConnection(conn net.Conn, kind string) {
 // and a severity
 func parseMessage(b []byte) (msg logvac.Message) {
 	config.Log.Trace("Raw syslog message: %v", string(b))
-	parsers := make([]syslogparser.LogParser, 3)
-	parsers[0] = rfc3164.NewParser(b)
-	parsers[1] = rfc5424.NewParser(b)
-	parsers[2] = &fakeSyslog{b}
+	parsers := make([]syslogparser.LogParser, 4)
+	parsers[0] = &narc{data: b}
+	parsers[1] = rfc3164.NewParser(b)
+	parsers[2] = rfc5424.NewParser(b)
+	parsers[3] = &fakeSyslog{b}
 
 	for _, parser := range parsers {
 		config.Log.Trace("Trying Parser...")
@@ -126,17 +134,11 @@ func parseMessage(b []byte) (msg logvac.Message) {
 			// todo: handle rfc5424 'message' and 'app_name' fields (correspond to content and tag)
 			parsedData := parser.Dump()
 			config.Log.Trace("Parsed data: %v", parsedData)
-			msg.Hostname = parsedData["hostname"].(string)
+			msg.Time = time.Now()
+			msg.Id = parsedData["hostname"].(string)
 			msg.Tag = parsedData["tag"].(string)
-			msg.Time = parsedData["timestamp"].(time.Time)
 			msg.Priority = adjust[parsedData["severity"].(int)] // parser guarantees [0,7]
-			tag, ok := parsedData["tag"]
-			switch {
-			case ok == true:
-				msg.Content = tag.(string) + " " + parsedData["content"].(string)
-			default:
-				msg.Content = parsedData["content"].(string)
-			}
+			msg.Content = parsedData["content"].(string)
 			return
 		}
 	}
@@ -150,12 +152,39 @@ func (fake *fakeSyslog) Parse() error {
 
 func (fake *fakeSyslog) Dump() syslogparser.LogParts {
 	parsed := make(map[string]interface{}, 4)
-	parsed["timestamp"] = time.Now()
 	parsed["severity"] = 5
 	parsed["content"] = string(fake.data)
 	return parsed
 }
 
 func (fake *fakeSyslog) Location(loc *time.Location) {
+	return
+}
+
+// message parser for narc
+func (n *narc) Parse() error {
+	var value logvac.Message
+	// todo: dummy, implement an actual parsing, its a raw string (see syslogparser)
+	// "<83>Mar 04 17:24:41 web1 apache[error] this is an importnt log"
+	var err error
+	err = json.Unmarshal(n.data, &value)
+	if err != nil {
+		config.Log.Trace("Failed to unmarshal '%q'- %v", n.data, err)
+		return err
+	}
+	n.message = value
+	return nil
+}
+
+func (n *narc) Dump() syslogparser.LogParts {
+	parsed := make(map[string]interface{}, 4)
+	parsed["hostname"] = n.message.Id
+	parsed["tag"] = n.message.Tag
+	parsed["severity"] = n.message.Priority
+	parsed["content"] = n.message.Content
+	return parsed
+}
+
+func (n *narc) Location(loc *time.Location) {
 	return
 }

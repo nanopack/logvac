@@ -22,6 +22,7 @@ var (
 	AuthAddress = "" // address or file location of auth backend ('boltdb:///var/db/logvac.bolt' or 'postgresql://127.0.0.1')
 
 	// other
+	MsgType  = "app"
 	LogLevel = "info"
 	Token    = "secret"
 	Log      lumber.Logger
@@ -38,10 +39,11 @@ func AddFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVarP(&DbAddress, "db-address", "", DbAddress, "Log storage address")
 
 	// authenticator
-	cmd.Flags().StringVarP(&AuthAddress, "auth-address", "", AuthAddress, "Address or file location of authentication db. ('boltdb:///var/db/logvac.bolt' or 'postgresql://127.0.0.1')")
+	cmd.PersistentFlags().StringVarP(&AuthAddress, "auth-address", "", AuthAddress, "Address or file location of authentication db. ('boltdb:///var/db/logvac.bolt' or 'postgresql://127.0.0.1')")
 
 	// other
-	cmd.Flags().StringVarP(&LogLevel, "log-level", "", LogLevel, "LogLevel")
+	cmd.Flags().StringVarP(&LogLevel, "log-level", "", LogLevel, "Level at which to log")
+	cmd.Flags().StringVarP(&MsgType, "log-type", "", MsgType, "Default type to apply to incoming logs (commonly used: app|deploy)")
 	cmd.Flags().StringVarP(&Token, "token", "", Token, "Token security")
 }
 

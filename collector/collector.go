@@ -14,7 +14,7 @@ var (
 
 func Init() error {
 	if config.ListenTcp != "" {
-		err := SyslogTCPStart("app", config.ListenTcp)
+		err := SyslogTCPStart(config.ListenTcp)
 		if err != nil {
 			return err
 		}
@@ -22,15 +22,15 @@ func Init() error {
 	}
 
 	if config.ListenUdp != "" {
-		err := SyslogUDPStart("app", config.ListenUdp)
+		err := SyslogUDPStart(config.ListenUdp)
 		if err != nil {
 			return err
 		}
 		config.Log.Info("Collector listening on udp://%v...", config.ListenUdp)
 	}
 
-	if config.ListenUdp != "" {
-		CollectHandler = GenerateHttpCollector("deploy")
+	if config.ListenHttp != "" {
+		CollectHandler = GenerateHttpCollector()
 		RetreiveHandler = GenerateArchiveEndpoint(drain.Archiver)
 		config.Log.Debug("Collector listening on https://%v...", config.ListenHttp)
 	}

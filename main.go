@@ -1,8 +1,9 @@
 package main
 
 import (
-	"fmt"
+	"io"
 	"os"
+	"syscall"
 
 	"github.com/jcelliott/lumber"
 	"github.com/spf13/cobra"
@@ -106,15 +107,47 @@ func serverStart() {
 }
 
 func exportLogvac(ccmd *cobra.Command, args []string) {
-	// authenticator.Export()
-	fmt.Printf("File to export: %v\n", portFile)
-	config.Log.Debug("File to export: %v\n", portFile)
-	return
+	err := authenticator.Init()
+	if err != nil {
+		config.Log.Fatal("Authenticator failed to initialize - %v", err)
+		os.Exit(1)
+	}
+
+	var exportWriter io.Writer
+	if portFile != "" {
+		exportWriter, err = os.Create(portFile)
+		if err != nil {
+			config.Log.Fatal("Failed to open file - %v", err)
+		}
+	} else {
+		exportWriter = os.NewFile(uintptr(syscall.Stdout), "/dev/stdout") // stdout
+	}
+
+	err = authenticator.ExportLogvac(exportWriter)
+	if err != nil {
+		config.Log.Fatal("Failed to export - %v", err)
+	}
 }
 
 func importLogvac(ccmd *cobra.Command, args []string) {
-	// authenticator.Import()
-	fmt.Printf("File to import: %v\n", portFile)
-	config.Log.Debug("File to import: %v\n", portFile)
-	return
+	err := authenticator.Init()
+	if err != nil {
+		config.Log.Fatal("Authenticator failed to initialize - %v", err)
+		os.Exit(1)
+	}
+
+	var importReader io.Reader
+	if portFile != "" {
+		importReader, err = os.Open(portFile)
+		if err != nil {
+			config.Log.Fatal("Failed to open file - %v", err)
+		}
+	} else {
+		importReader = os.NewFile(uintptr(syscall.Stdin), "/dev/stdin") // stdin
+	}
+
+	err = authenticator.ImportLogvac(importReader)
+	if err != nil {
+		config.Log.Fatal("Failed to import - %v", err)
+	}
 }

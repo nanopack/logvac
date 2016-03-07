@@ -50,7 +50,7 @@ func (m *Mist) Publish(tag []string, data string) error {
 // publishDrain returns a Drain
 func publishDrain(pubDrain PublisherDrain) logvac.Drain {
 	return func(msg logvac.Message) {
-		tags := []string{"log", msg.Type, msg.Hostname, msg.Tag}
+		tags := []string{"log", msg.Type, msg.Id, msg.Tag}
 		severities := []string{"trace", "debug", "info", "warn", "error", "fatal"}
 		tags = append(tags, severities[:((msg.Priority+1)%6)]...)
 		data, err := json.Marshal(msg)

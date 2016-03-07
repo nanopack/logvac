@@ -4,6 +4,7 @@ package authenticator
 
 import (
 	"fmt"
+	"io"
 	"net/url"
 
 	"github.com/nanopack/logvac/config"
@@ -15,6 +16,9 @@ type (
 		add(token string) error
 		remove(token string) error
 		valid(token string) bool
+
+		exportLogvac(exportWriter io.Writer) error
+		importLogvac(importReader io.Reader) error
 	}
 )
 
@@ -83,4 +87,24 @@ func Valid(token string) bool {
 	}
 	config.Log.Trace("Validating token: %v...", token)
 	return authenticator.valid(token)
+}
+
+// Export exports auth tokens to a `logvac import`able file
+func ExportLogvac(exportWriter io.Writer) error {
+	// func ExportLogvac() error {
+	if authenticator == nil {
+		return fmt.Errorf("Authenticator not initialized")
+	}
+	config.Log.Trace("Exporting tokens...")
+	return authenticator.exportLogvac(exportWriter)
+	// return authenticator.exportLogvac()
+}
+
+// Import imports auth tokens from a `logvac export`ed file
+func ImportLogvac(importReader io.Reader) error {
+	if authenticator == nil {
+		return nil
+	}
+	config.Log.Trace("Importing tokens...")
+	return authenticator.importLogvac(importReader)
 }

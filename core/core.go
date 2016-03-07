@@ -20,12 +20,12 @@ type (
 	}
 
 	Message struct {
-		Hostname string `json:"hostname"` // may not want to specify json, mist may not love
-		Tag      string // []string?
-		Type     string
 		Time     time.Time `json:"time"`
+		Id       string    `json:"id"`  // ignoreifempty?
+		Tag      string    `json:"tag"` // ignoreifempty? // []string?
+		Type     string    `json:"type"`
 		Priority int       `json:"priority"`
-		Content  string    `json:"content"`
+		Content  string    `json:"message"`
 	}
 
 	Logvac struct {
@@ -63,7 +63,7 @@ func (l *Logvac) close() {
 	}
 }
 
-// AddDrain addes a drain to the listeners and sets its logger
+// AddDrain adds a drain to the listeners and sets its logger
 func AddDrain(tag string, drain Drain) {
 	Vac.addDrain(tag, drain)
 }
