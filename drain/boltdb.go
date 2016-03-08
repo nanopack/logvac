@@ -20,7 +20,6 @@ type (
 )
 
 func NewBoltArchive(path string) (*BoltArchive, error) {
-	config.Log.Debug("[BOLTDB] Opening at %v...", path)
 	db, err := bolt.Open(path, 0600, nil)
 	if err != nil {
 		return nil, err
@@ -67,7 +66,7 @@ func (archive *BoltArchive) Slice(name, host, tag string, offset, limit uint64, 
 		for k, v := c.First(); k != nil && limit > 0; k, v = c.Next() {
 			msg := logvac.Message{}
 			if err := json.Unmarshal(v, &msg); err != nil {
-				return fmt.Errorf("Couldn't unmarshal message", err)
+				return fmt.Errorf("Couldn't unmarshal message - %v", err)
 			}
 			if msg.Priority >= level {
 				if msg.Id == host || host == "" {

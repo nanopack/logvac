@@ -1,11 +1,8 @@
 package drain
 
 import (
-	// "encoding/json"
-	// "fmt"
-	// "io"
-
-	// "github.com/jcelliott/lumber"
+	"fmt"
+	"net/url"
 
 	"github.com/nanopack/logvac/config"
 	"github.com/nanopack/logvac/core"
@@ -35,10 +32,48 @@ var (
 )
 
 func Init() error {
-	var err error
-	// parse db-url if scheme bolt, use boltdb, default to bolt
-	if true {
-		Archiver, err = NewBoltArchive(config.DbAddress)
+	// initialize archiver
+	err := archiveInit()
+	if err != nil {
+		return fmt.Errorf("Failed to initialize archiver - %v", err)
+	}
+	config.Log.Info("Archiving drain '%s' initialized", config.DbAddress)
+
+	// initialize publisher (if not empty)
+	if config.PubAddress != "" {
+		err = publishInit()
+		if err != nil {
+			return fmt.Errorf("Failed to initialize archiver - %v", err)
+		}
+		config.Log.Info("Publishing drain '%s' initialized", config.PubAddress)
+	}
+
+	return nil
+}
+
+func archiveInit() error {
+	u, err := url.Parse(config.DbAddress)
+	if err != nil {
+		return fmt.Errorf("Failed to parse db connection - %v", err)
+	}
+	switch u.Scheme {
+	case "boltdb":
+		Archiver, err = NewBoltArchive(u.Path)
+		if err != nil {
+			return err
+		}
+	case "file":
+		Archiver, err = NewBoltArchive(u.Path)
+		if err != nil {
+			return err
+		}
+	// case "elasticsearch":
+	// 	Archiver, err = NewElasticArchive(config.DbAddress)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	default:
+		Archiver, err = NewBoltArchive(u.Path)
 		if err != nil {
 			return err
 		}
@@ -48,24 +83,30 @@ func Init() error {
 	if err != nil {
 		return err
 	}
-	config.Log.Debug("Archiving drain added")
+	return nil
+}
 
-	// initialize publisher (if not empty)
-	if config.PubAddress != "" {
-		// parse pub-url if scheme mist? use mist, default to mist
-		if true {
-			publisher, err = NewMistClient(config.PubAddress)
-			if err != nil {
-				return err
-			}
-			// publisher = &Mist{}
-		}
-		err = publisher.Init()
+func publishInit() error {
+	u, err := url.Parse(config.PubAddress)
+	if err != nil {
+		return fmt.Errorf("Failed to parse publisher connection - %v", err)
+	}
+	switch u.Scheme {
+	case "mist":
+		publisher, err = NewMistClient(config.PubAddress)
 		if err != nil {
 			return err
 		}
-		config.Log.Debug("Publishing drain added")
+	default:
+		publisher, err = NewMistClient(config.PubAddress)
+		if err != nil {
+			return err
+		}
 	}
-
+	// initialize publisher
+	err = publisher.Init()
+	if err != nil {
+		return err
+	}
 	return nil
 }

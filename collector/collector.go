@@ -32,7 +32,7 @@ func Init() error {
 	if config.ListenHttp != "" {
 		CollectHandler = GenerateHttpCollector()
 		RetreiveHandler = GenerateArchiveEndpoint(drain.Archiver)
-		config.Log.Debug("Collector listening on https://%v...", config.ListenHttp)
+		config.Log.Info("Collector listening on http://%v...", config.ListenHttp)
 	}
 
 	return nil

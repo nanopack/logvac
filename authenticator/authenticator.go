@@ -58,7 +58,7 @@ func Init() error {
 	if err != nil {
 		return err
 	}
-	config.Log.Debug("Authenticator '%s' initialized", config.AuthAddress)
+	config.Log.Info("Authenticator '%s' initialized", config.AuthAddress)
 	return nil
 }
 
@@ -97,7 +97,6 @@ func ExportLogvac(exportWriter io.Writer) error {
 	}
 	config.Log.Trace("Exporting tokens...")
 	return authenticator.exportLogvac(exportWriter)
-	// return authenticator.exportLogvac()
 }
 
 // Import imports auth tokens from a `logvac export`ed file

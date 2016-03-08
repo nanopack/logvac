@@ -13,6 +13,12 @@ Incomplete/Experimental
 
 Currently uses around 600k of memory while idling.
 
+## Usage
+
+```
+logvac -s --pub-address="127.0.0.1:1445" --db-address="/tmp/logvac.boltdb" --token="secret" --auth-address="boltdb:///tmp/auth.bolt"
+```
+
 ## Todo
 
 - Documentation

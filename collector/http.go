@@ -11,6 +11,8 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strconv"
+	"strings"
+	"time"
 
 	"github.com/jcelliott/lumber"
 
@@ -23,27 +25,39 @@ type Http struct{}
 
 // create and return a http handler that can be dropped into an api.
 func GenerateHttpCollector() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		body, err := ioutil.ReadAll(r.Body)
+	return func(res http.ResponseWriter, req *http.Request) {
+		body, err := ioutil.ReadAll(req.Body)
 		if err != nil {
+			res.WriteHeader(500)
 			return
 		}
-		// todo make sure we parse the (expected) json body
+
 		var msg logvac.Message
 		err = json.Unmarshal(body, &msg)
 		if err != nil {
-			// todo: keep body as "message" and make up other Message.bits
-			w.WriteHeader(400)
-			return
+			if !strings.Contains(err.Error(), "invalid character") {
+				res.WriteHeader(400)
+				res.Write([]byte(err.Error()))
+				return
+			}
+
+			// keep body as "message" and make up priority
+			msg.Content = string(body)
+			msg.Priority = 2
+			msg.Type = "http-raw" // todo: default to MsgType instead?
 		}
 
 		if msg.Type == "" {
 			msg.Type = config.MsgType
 		}
+		msg.Time = time.Now()
+		msg.UTime = msg.Time.UnixNano()
 
 		config.Log.Trace("Message: %+v", msg)
 		logvac.WriteMessage(msg)
-		// logvac.Publish(header, logLevel, string(body))
+
+		res.WriteHeader(200)
+		res.Write([]byte("success!\n"))
 	}
 }
 
@@ -56,7 +70,7 @@ func GenerateArchiveEndpoint(archive drain.ArchiverDrain) http.HandlerFunc {
 
 		kind := query.Get("type")
 		if kind == "" {
-			kind = "app"
+			kind = config.MsgType //"app"
 		}
 		start := query.Get("start")
 		if start == "" {

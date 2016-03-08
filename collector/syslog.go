@@ -127,6 +127,7 @@ func parseMessage(b []byte) (msg logvac.Message) {
 			parsedData := parser.Dump()
 			config.Log.Trace("Parsed data: %v", parsedData)
 			msg.Time = time.Now()
+			msg.UTime = msg.Time.UnixNano()
 			msg.Id = parsedData["hostname"].(string)
 			msg.Tag = parsedData["tag"].(string)
 			msg.Priority = adjust[parsedData["severity"].(int)] // parser guarantees [0,7]

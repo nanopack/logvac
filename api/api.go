@@ -36,7 +36,7 @@ func handleRequest(fn http.HandlerFunc) http.HandlerFunc {
 
 		// must be after req returns
 		getStatus := func(trw http.ResponseWriter) string {
-			r, _ := regexp.Compile("status:([0-9]{3})")
+			r, _ := regexp.Compile("status:([0-9]*)")
 			return r.FindStringSubmatch(fmt.Sprintf("%+v", trw))[1]
 		}
 

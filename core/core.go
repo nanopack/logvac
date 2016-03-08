@@ -21,6 +21,7 @@ type (
 
 	Message struct {
 		Time     time.Time `json:"time"`
+		UTime    int64     `json:"utime"`
 		Id       string    `json:"id"`  // ignoreifempty?
 		Tag      string    `json:"tag"` // ignoreifempty? // []string?
 		Type     string    `json:"type"`
@@ -99,21 +100,6 @@ func (l *Logvac) removeDrain(tag string) {
 		close(drain.done)
 		delete(l.drains, tag)
 	}
-}
-
-// Publish publishes collected Message to all drains
-func Publish(kind string, priority int, content string) {
-	Vac.publish(kind, priority, content)
-}
-
-func (l *Logvac) publish(kind string, priority int, content string) {
-	m := Message{
-		Type:     kind,
-		Time:     time.Now(),
-		Priority: priority,
-		Content:  content,
-	}
-	l.writeMessage(m)
 }
 
 // WriteMessage broadcasts to all drains in seperate go routines
