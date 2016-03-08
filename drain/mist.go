@@ -15,12 +15,10 @@ type pthinger interface {
 }
 type Mist struct {
 	mist pthinger
-	// mist mistCore.Client
 }
 
 func NewMistClient(address string) (*Mist, error) {
-	// c, err := mistCore.NewRemoteClient(address)
-	c, err := mistCore.NewTCP(address)
+	c, err := mistCore.New(address)
 	if err != nil {
 		return nil, err
 	}
@@ -51,6 +49,15 @@ func (m *Mist) Publish(tag []string, data string) error {
 func publishDrain(pubDrain PublisherDrain) logvac.Drain {
 	return func(msg logvac.Message) {
 		tags := []string{"log", msg.Type, msg.Id, msg.Tag}
+		// remove blank tags
+	cleanTags:
+		for i := range tags {
+			if tags[i] == "" {
+				tags = append(tags[:i], tags[i+1:]...)
+				goto cleanTags
+			}
+		}
+
 		severities := []string{"trace", "debug", "info", "warn", "error", "fatal"}
 		tags = append(tags, severities[:((msg.Priority+1)%6)]...)
 		data, err := json.Marshal(msg)

@@ -16,6 +16,7 @@ type (
 		Slice(name, host, tag string, offset, limit uint64, level int) ([]logvac.Message, error)
 		// Write writes the message to database
 		Write(msg logvac.Message)
+		Expire()
 	}
 
 	// Publisher defines a pub-sub type drain
@@ -58,6 +59,7 @@ func archiveInit() error {
 	}
 	switch u.Scheme {
 	case "boltdb":
+		// todo: use `dirname DbAddress` and create a 'db' for each log-type
 		Archiver, err = NewBoltArchive(u.Path)
 		if err != nil {
 			return err
@@ -83,6 +85,8 @@ func archiveInit() error {
 	if err != nil {
 		return err
 	}
+	// start cleanup goroutine
+	go Archiver.Expire()
 	return nil
 }
 

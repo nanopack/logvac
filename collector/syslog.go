@@ -59,7 +59,7 @@ func SyslogUDPStart(address string) error {
 					// UDP packets
 					go func(buf []byte) {
 						msg := parseMessage(buf[0:n])
-						msg.Type = config.MsgType
+						msg.Type = config.LogType
 						logvac.WriteMessage(msg)
 					}(buf)
 				}
@@ -103,7 +103,7 @@ func handleConnection(conn net.Conn) {
 			continue
 		}
 		msg := parseMessage([]byte(line))
-		msg.Type = config.MsgType
+		msg.Type = config.LogType
 		logvac.WriteMessage(msg)
 	}
 }
@@ -125,7 +125,7 @@ func parseMessage(b []byte) (msg logvac.Message) {
 		if err == nil {
 			// todo: handle rfc5424 'message' and 'app_name' fields (correspond to content and tag)
 			parsedData := parser.Dump()
-			config.Log.Trace("Parsed data: %v", parsedData)
+			// config.Log.Trace("Parsed data: %v", parsedData)
 			msg.Time = time.Now()
 			msg.UTime = msg.Time.UnixNano()
 			msg.Id = parsedData["hostname"].(string)

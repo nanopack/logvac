@@ -16,13 +16,14 @@ var (
 
 	// drains
 	PubAddress = ""
-	DbAddress  = "file:///tmp/logvac.bolt"
+	DbAddress  = "boltdb:///tmp/logvac.bolt"
 
 	// authenticator
 	AuthAddress = "" // address or file location of auth backend ('boltdb:///var/db/logvac.bolt' or 'postgresql://127.0.0.1')
 
 	// other
-	MsgType  = "app"
+	LogKeep  = `{"app":"2w"}` // LogType and expire (X(m)in, (h)our,  (d)ay, (w)eek, (y)ear) (1, 10, 100 == keep up to that many)
+	LogType  = "app"
 	LogLevel = "info"
 	Token    = "secret"
 	Log      lumber.Logger
@@ -30,21 +31,22 @@ var (
 
 func AddFlags(cmd *cobra.Command) {
 	// collectors
-	cmd.Flags().StringVarP(&ListenHttp, "listen-http", "", ListenHttp, "API listen address (same endpoint for http log collection)")
-	cmd.Flags().StringVarP(&ListenUdp, "listen-udp", "", ListenUdp, "UDP log collection endpoint")
-	cmd.Flags().StringVarP(&ListenTcp, "listen-tcp", "", ListenTcp, "TCP log collection endpoint")
+	cmd.Flags().StringVarP(&ListenHttp, "listen-http", "a", ListenHttp, "API listen address (same endpoint for http log collection)")
+	cmd.Flags().StringVarP(&ListenUdp, "listen-udp", "u", ListenUdp, "UDP log collection endpoint")
+	cmd.Flags().StringVarP(&ListenTcp, "listen-tcp", "t", ListenTcp, "TCP log collection endpoint")
 
 	// drains
-	cmd.Flags().StringVarP(&PubAddress, "pub-address", "", PubAddress, "Log publisher (mist) address")
-	cmd.Flags().StringVarP(&DbAddress, "db-address", "", DbAddress, "Log storage address")
+	cmd.Flags().StringVarP(&PubAddress, "pub-address", "p", PubAddress, "Log publisher (mist) address")
+	cmd.Flags().StringVarP(&DbAddress, "db-address", "d", DbAddress, "Log storage address")
 
 	// authenticator
-	cmd.PersistentFlags().StringVarP(&AuthAddress, "auth-address", "", AuthAddress, "Address or file location of authentication db. ('boltdb:///var/db/logvac.bolt' or 'postgresql://127.0.0.1')")
+	cmd.PersistentFlags().StringVarP(&AuthAddress, "auth-address", "A", AuthAddress, "Address or file location of authentication db. ('boltdb:///var/db/logvac.bolt' or 'postgresql://127.0.0.1')")
 
 	// other
-	cmd.Flags().StringVarP(&LogLevel, "log-level", "", LogLevel, "Level at which to log")
-	cmd.Flags().StringVarP(&MsgType, "log-type", "", MsgType, "Default type to apply to incoming logs (commonly used: app|deploy)")
-	cmd.Flags().StringVarP(&Token, "token", "", Token, "Token security")
+	cmd.Flags().StringVarP(&LogKeep, "log-keep", "k", LogKeep, "Age or number of logs to keep per type `{\"app\":\"2w\", \"deploy\": 10}` (int or X(m)in, (h)our,  (d)ay, (w)eek, (y)ear)")
+	cmd.Flags().StringVarP(&LogLevel, "log-level", "l", LogLevel, "Level at which to log")
+	cmd.Flags().StringVarP(&LogType, "log-type", "L", LogType, "Default type to apply to incoming logs (commonly used: app|deploy)")
+	cmd.Flags().StringVarP(&Token, "token", "T", Token, "Token security")
 }
 
 // todo: use viper

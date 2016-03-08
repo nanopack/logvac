@@ -57,7 +57,7 @@ func main() {
 	config.AddFlags(&command)
 
 	command.Flags().BoolVarP(&server, "server", "s", false, "Run as server")
-	command.Flags().StringVarP(&configFile, "configFile", "", "", "config file location for server")
+	command.Flags().StringVarP(&configFile, "config-file", "c", "", "config file location for server")
 
 	exportCommand.Flags().StringVarP(&portFile, "file", "f", "", "Export file location")
 	importCommand.Flags().StringVarP(&portFile, "file", "f", "", "Import file location")

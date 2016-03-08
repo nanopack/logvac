@@ -44,16 +44,16 @@ func GenerateHttpCollector() http.HandlerFunc {
 			// keep body as "message" and make up priority
 			msg.Content = string(body)
 			msg.Priority = 2
-			msg.Type = "http-raw" // todo: default to MsgType instead?
+			msg.Type = "http-raw" // todo: default to LogType instead?
 		}
 
 		if msg.Type == "" {
-			msg.Type = config.MsgType
+			msg.Type = config.LogType
 		}
 		msg.Time = time.Now()
 		msg.UTime = msg.Time.UnixNano()
 
-		config.Log.Trace("Message: %+v", msg)
+		config.Log.Trace("Message: %q", msg)
 		logvac.WriteMessage(msg)
 
 		res.WriteHeader(200)
@@ -70,7 +70,7 @@ func GenerateArchiveEndpoint(archive drain.ArchiverDrain) http.HandlerFunc {
 
 		kind := query.Get("type")
 		if kind == "" {
-			kind = config.MsgType //"app"
+			kind = config.LogType // "app"
 		}
 		start := query.Get("start")
 		if start == "" {
@@ -86,7 +86,7 @@ func GenerateArchiveEndpoint(archive drain.ArchiverDrain) http.HandlerFunc {
 		}
 		config.Log.Trace("type: %v, start: %v, limit: %v, level: %v, id: %v, tag: %v", kind, start, limit, level, host, tag)
 		logLevel := lumber.LvlInt(level)
-		realOffset, err := strconv.Atoi(start)
+		realOffset, err := strconv.ParseUint(start, 0, 64)
 		if err != nil {
 			res.WriteHeader(500)
 			res.Write([]byte("bad start offset"))
@@ -98,7 +98,7 @@ func GenerateArchiveEndpoint(archive drain.ArchiverDrain) http.HandlerFunc {
 			res.Write([]byte("bad limit"))
 			return
 		}
-		slices, err := archive.Slice(kind, host, tag, uint64(realOffset), uint64(realLimit), logLevel)
+		slices, err := archive.Slice(kind, host, tag, realOffset, uint64(realLimit), logLevel)
 		if err != nil {
 			res.WriteHeader(500)
 			res.Write([]byte(err.Error()))
