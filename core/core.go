@@ -81,7 +81,8 @@ func (l *Logvac) addDrain(tag string, drain Drain) {
 			case <-channels.done:
 				return
 			case msg := <-channels.send:
-				drain(msg)
+				// todo: ensure mist plays nice with goroutine
+				go drain(msg)
 			}
 		}
 	}()

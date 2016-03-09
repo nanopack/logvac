@@ -53,7 +53,7 @@ func GenerateHttpCollector() http.HandlerFunc {
 		msg.Time = time.Now()
 		msg.UTime = msg.Time.UnixNano()
 
-		config.Log.Trace("Message: %q", msg)
+		// config.Log.Trace("Message: %q", msg)
 		logvac.WriteMessage(msg)
 
 		res.WriteHeader(200)

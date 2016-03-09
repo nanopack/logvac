@@ -113,7 +113,7 @@ func handleConnection(conn net.Conn) {
 // it will drop the whole message into the content and make up a timestamp
 // and a severity
 func parseMessage(b []byte) (msg logvac.Message) {
-	config.Log.Trace("Raw syslog message: %v", string(b))
+	// config.Log.Trace("Raw syslog message: %v", string(b))
 	parsers := make([]syslogparser.LogParser, 4)
 	parsers[0] = rfc3164.NewParser(b)
 	parsers[1] = rfc5424.NewParser(b)
@@ -145,6 +145,8 @@ func (fake *fakeSyslog) Parse() error {
 
 func (fake *fakeSyslog) Dump() syslogparser.LogParts {
 	parsed := make(map[string]interface{}, 4)
+	parsed["hostname"] = ""
+	parsed["tag"] = "syslog-raw" // type gets overwritten
 	parsed["severity"] = 5
 	parsed["content"] = string(fake.data)
 	return parsed
