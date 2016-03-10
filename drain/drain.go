@@ -44,7 +44,7 @@ func Init() error {
 	if config.PubAddress != "" {
 		err = publishInit()
 		if err != nil {
-			return fmt.Errorf("Failed to initialize archiver - %v", err)
+			return fmt.Errorf("Failed to initialize publisher - %v", err)
 		}
 		config.Log.Info("Publishing drain '%s' initialized", config.PubAddress)
 	}

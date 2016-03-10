@@ -108,12 +108,13 @@ func (a *BoltArchive) Write(msg logvac.Message) {
 
 		// this needs to ensure lexographical order
 		key := &bytes.Buffer{}
-		nextLine, err := bucket.NextSequence()
-		if err != nil {
-			return err
-		}
+		// nextLine, err := bucket.NextSequence()
+		// if err != nil {
+		// 	return err
+		// }
 
-		if err = binary.Write(key, binary.BigEndian, nextLine); err != nil {
+		// if err = binary.Write(key, binary.BigEndian, nextLine); err != nil {
+		if err = binary.Write(key, binary.BigEndian, msg.UTime); err != nil {
 			return err
 		}
 		if err = bucket.Put(key.Bytes(), value); err != nil {
@@ -189,6 +190,7 @@ func (a *BoltArchive) Expire() {
 					bucket := tx.Bucket([]byte(k))
 					if bucket == nil {
 						config.Log.Debug("No logs of type '%s' found", k)
+						return fmt.Errorf("No logs of type '%s' found", k)
 					}
 
 					c := bucket.Cursor()
@@ -216,6 +218,7 @@ func (a *BoltArchive) Expire() {
 					bucket := tx.Bucket([]byte(k))
 					if bucket == nil {
 						config.Log.Debug("No logs of type '%s' found", k)
+						return fmt.Errorf("No logs of type '%s' found", k)
 					}
 
 					// trim the bucket to size

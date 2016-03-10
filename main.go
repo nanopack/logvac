@@ -35,43 +35,39 @@ var (
 
 		Run: importLogvac,
 	}
-)
 
-func main() {
-	server := true
-	command := cobra.Command{
+	Logvac = &cobra.Command{
 		Use:   "logvac",
 		Short: "logvac logging server",
 		Long:  ``,
-		Run: func(ccmd *cobra.Command, args []string) {
-			if !server {
-				ccmd.HelpFunc()(ccmd, args)
-				return
-			}
-			if configFile != "" {
-				config.Setup(configFile)
-			}
-			serverStart()
-		},
+
+		Run: startLogvac,
 	}
-	config.AddFlags(&command)
+)
 
-	command.Flags().BoolVarP(&server, "server", "s", false, "Run as server")
-	command.Flags().StringVarP(&configFile, "config-file", "c", "", "config file location for server")
+func main() {
+	Logvac.Flags().StringVarP(&configFile, "config-file", "c", "", "config file location for server")
+	Logvac.AddCommand(exportCommand)
+	Logvac.AddCommand(importCommand)
 
+	config.AddFlags(Logvac)
 	exportCommand.Flags().StringVarP(&portFile, "file", "f", "", "Export file location")
 	importCommand.Flags().StringVarP(&portFile, "file", "f", "", "Import file location")
 
-	command.AddCommand(exportCommand)
-	command.AddCommand(importCommand)
-
-	// initialize logger *(only benefit is export/import command) todo: just don't use config.Log
-	config.Log = lumber.NewConsoleLogger(lumber.LvlInt(config.LogLevel))
-
-	command.Execute()
+	Logvac.Execute()
 }
 
-func serverStart() {
+// func serverStart() {
+func startLogvac(ccmd *cobra.Command, args []string) {
+	if err := config.ReadConfigFile(configFile); err != nil {
+		config.Log.Fatal("Failed to read config - %v", err)
+		os.Exit(1)
+	}
+
+	if !config.Server {
+		ccmd.HelpFunc()(ccmd, args)
+		return
+	}
 	// initialize logger
 	config.Log = lumber.NewConsoleLogger(lumber.LvlInt(config.LogLevel))
 
