@@ -16,7 +16,7 @@ var (
 
 	// drains
 	PubAddress = "" // mist://127.0.0.1:1445
-	DbAddress  = "boltdb:///tmp/logvac.bolt"
+	DbAddress  = "boltdb:///var/db/logvac.bolt"
 
 	// authenticator
 	AuthAddress = "boltdb:///var/db/log-auth.bolt" // address or file location of auth backend ('boltdb:///var/db/logvac.bolt' or 'postgresql://127.0.0.1')

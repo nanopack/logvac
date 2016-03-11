@@ -7,14 +7,9 @@ Simple, lightweight, api-driven log aggregation service with realtime push capab
 
 ## Status
 
-Incomplete/Experimental
+Experimental
 
-## Memory Usage
-
-Currently uses around 600k of memory while idling.
-
-## Usage
-#### Quickstart
+## Quickstart
 ```sh
 # start server with defaults
 logvac -s
@@ -28,6 +23,7 @@ curl -k https://127.0.0.1:1234?type=test -H "X-AUTH-TOKEN: user"
 # Congratulations logmaster!
 ```
 
+## Usage
 ```
   logvac [flags]
   logvac [command]
@@ -99,8 +95,8 @@ logvac add-token -t "user1-token"
 ```
 
 #### Adding|Viewing Logs
-See syslog examples [here](../collector/README.md)  
-See http examples [here](../api/README.md)  
+See syslog examples [here](./collector/README.md)  
+See http examples [here](./api/README.md)  
 **Important Note:** javascript clients may see up-to a ~100 nanosecond variance when specifying 'start=xxx' as a query parameter due to javascript's lack of precision for the 'number' datatype  
 
 ## Todo
