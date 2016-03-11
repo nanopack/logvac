@@ -39,6 +39,9 @@ func Start(collector http.HandlerFunc, retriever http.HandlerFunc) error {
 // handleRequest add a bit of logging
 func handleRequest(fn http.HandlerFunc) http.HandlerFunc {
 	return func(rw http.ResponseWriter, req *http.Request) {
+		if config.Insecure {
+			rw.Header().Set("Access-Control-Allow-Origin", "*")
+		}
 
 		fn(rw, req)
 
