@@ -1,3 +1,5 @@
+// authenticator_test tests the token interaction bit of the api
+// as well as export/import functionality
 package authenticator_test
 
 import (
@@ -28,7 +30,7 @@ func TestMain(m *testing.M) {
 	initialize()
 
 	// start api
-	go api.Start(collector.CollectHandler, collector.RetreiveHandler)
+	go api.Start(collector.CollectHandler)
 	<-time.After(1 * time.Second)
 	rtn := m.Run()
 

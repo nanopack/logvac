@@ -10,15 +10,11 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
-	"strconv"
 	"strings"
 	"time"
 
-	"github.com/jcelliott/lumber"
-
 	"github.com/nanopack/logvac/config"
 	"github.com/nanopack/logvac/core"
-	"github.com/nanopack/logvac/drain"
 )
 
 type Http struct{}
@@ -58,61 +54,5 @@ func GenerateHttpCollector() http.HandlerFunc {
 
 		res.WriteHeader(200)
 		res.Write([]byte("success!\n"))
-	}
-}
-
-// note: javascript number precision may cause unexpected results (missing logs within 100 nanosecond window)
-func GenerateArchiveEndpoint(archive drain.ArchiverDrain) http.HandlerFunc {
-	return func(res http.ResponseWriter, req *http.Request) {
-		query := req.URL.Query()
-
-		host := query.Get("id")
-		tag := query.Get("tag")
-
-		kind := query.Get("type")
-		if kind == "" {
-			kind = config.LogType // "app"
-		}
-		start := query.Get("start")
-		if start == "" {
-			start = "0"
-		}
-		limit := query.Get("limit")
-		if limit == "" {
-			limit = "100"
-		}
-		level := query.Get("level")
-		if level == "" {
-			level = "TRACE"
-		}
-		config.Log.Trace("type: %v, start: %v, limit: %v, level: %v, id: %v, tag: %v", kind, start, limit, level, host, tag)
-		logLevel := lumber.LvlInt(level)
-		realOffset, err := strconv.ParseInt(start, 0, 64)
-		if err != nil {
-			res.WriteHeader(500)
-			res.Write([]byte("bad start offset"))
-			return
-		}
-		realLimit, err := strconv.Atoi(limit)
-		if err != nil {
-			res.WriteHeader(500)
-			res.Write([]byte("bad limit"))
-			return
-		}
-		slices, err := archive.Slice(kind, host, tag, realOffset, int64(realLimit), logLevel)
-		if err != nil {
-			res.WriteHeader(500)
-			res.Write([]byte(err.Error()))
-			return
-		}
-		body, err := json.Marshal(slices)
-		if err != nil {
-			res.WriteHeader(500)
-			res.Write([]byte(err.Error()))
-			return
-		}
-
-		res.WriteHeader(200)
-		res.Write(append(body, byte('\n')))
 	}
 }

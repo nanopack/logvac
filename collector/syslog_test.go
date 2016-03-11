@@ -1,11 +1,13 @@
-// api_test tests the api, from posting logs, to getting them (no-auth configured)
-package api_test
+// collector_test tests the syslog collectors
+// (http collector is tested in api_test)
+package collector_test
 
 import (
 	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"os"
 	"testing"
@@ -23,7 +25,7 @@ import (
 
 func TestMain(m *testing.M) {
 	// clean test dir
-	os.RemoveAll("/tmp/apiTest")
+	os.RemoveAll("/tmp/syslogTest")
 
 	// manually configure
 	initialize()
@@ -34,20 +36,51 @@ func TestMain(m *testing.M) {
 	rtn := m.Run()
 
 	// clean test dir
-	os.RemoveAll("/tmp/apiTest")
+	os.RemoveAll("/tmp/syslogTest")
 
 	os.Exit(rtn)
 }
 
-// test post logs
-func TestPostLogs(t *testing.T) {
-	body, err := rest("POST", "/", "{\"id\":\"log-test\",\"type\":\"app\",\"message\":\"test log\"}")
+// test pushing a log via udp
+func TestUdp(t *testing.T) {
+	ServerAddr, err := net.ResolveUDPAddr("udp", config.ListenUdp)
 	if err != nil {
 		t.Error(err)
 		t.FailNow()
 	}
-	if string(body) != "success!\n" {
-		t.Errorf("%q doesn't match expected out", body)
+
+	client, err := net.DialUDP("udp", nil, ServerAddr)
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
+	}
+	defer client.Close()
+
+	_, err = client.Write([]byte("<83>Mar 11 14:13:12 web2 apache[error] ello, your app is broke"))
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
+	}
+}
+
+// test pushing a log via tcp
+func TestTcp(t *testing.T) {
+	ServerAddr, err := net.ResolveTCPAddr("tcp", config.ListenTcp)
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
+	}
+
+	client, err := net.DialTCP("tcp", nil, ServerAddr)
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
+	}
+	defer client.Close()
+
+	_, err = client.Write([]byte("<83>Mar 11 14:13:12 web2 apache[daemon] serving some sweet stuff\n"))
+	if err != nil {
+		t.Error(err)
 		t.FailNow()
 	}
 	// boltdb seems to take some time committing the record (probably the speed/immediate commit tradeoff)
@@ -56,11 +89,12 @@ func TestPostLogs(t *testing.T) {
 
 // test get logs
 func TestGetLogs(t *testing.T) {
-	body, err := rest("GET", "/?type=app&id=log-test&start=0&limit=1", "")
+	body, err := rest("GET", "/?type=app", "")
 	if err != nil {
 		t.Error(err)
 		t.FailNow()
 	}
+
 	msg := []logvac.Message{}
 	err = json.Unmarshal(body, &msg)
 	if err != nil {
@@ -68,8 +102,13 @@ func TestGetLogs(t *testing.T) {
 		t.FailNow()
 	}
 
-	if len(msg) != 1 || msg[0].Content != "test log" {
+	if len(msg) != 2 || msg[0].Content != "ello, your app is broke" {
 		t.Errorf("%q doesn't match expected out", body)
+		t.FailNow()
+	}
+	if msg[1].Content != "serving some sweet stuff" {
+		t.Errorf("%q doesn't match expected out", body)
+		t.FailNow()
 	}
 }
 
@@ -96,12 +135,11 @@ func rest(method, route, data string) ([]byte, error) {
 
 // manually configure and start internals
 func initialize() {
-	config.Insecure = true
-	config.ListenHttp = "127.0.0.1:2234"
-	config.ListenTcp = "127.0.0.1:2235"
-	config.ListenUdp = "127.0.0.1:2234"
-	config.DbAddress = "boltdb:///tmp/apiTest/logvac.bolt"
+	config.ListenTcp = "127.0.0.1:4235"
+	config.ListenUdp = "127.0.0.1:4234"
+	config.DbAddress = "boltdb:///tmp/syslogTest/logvac.bolt"
 	config.AuthAddress = ""
+	config.Insecure = true
 	config.Log = lumber.NewConsoleLogger(lumber.LvlInt("ERROR"))
 
 	// initialize logvac
@@ -121,10 +159,18 @@ func initialize() {
 		os.Exit(1)
 	}
 
-	// initializes collectors
-	err = collector.Init()
+	// initializes syslog collectors
+	err = collector.SyslogTCPStart(config.ListenTcp)
 	if err != nil {
-		config.Log.Fatal("Collector failed to initialize - %v", err)
+		config.Log.Fatal("TCP collector failed to initialize - %v", err)
 		os.Exit(1)
 	}
+	config.Log.Info("Collector listening on tcp://%v...", config.ListenTcp)
+
+	err = collector.SyslogUDPStart(config.ListenUdp)
+	if err != nil {
+		config.Log.Fatal("UDP collector failed to initialize - %v", err)
+		os.Exit(1)
+	}
+	config.Log.Info("Collector listening on udp://%v...", config.ListenUdp)
 }

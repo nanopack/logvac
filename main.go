@@ -106,7 +106,7 @@ func startLogvac(ccmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 
-	err = api.Start(collector.CollectHandler, collector.RetreiveHandler)
+	err = api.Start(collector.CollectHandler)
 	if err != nil {
 		config.Log.Fatal("Api failed to initialize - %v", err)
 		os.Exit(1)

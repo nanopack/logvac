@@ -4,12 +4,10 @@ import (
 	"net/http"
 
 	"github.com/nanopack/logvac/config"
-	"github.com/nanopack/logvac/drain"
 )
 
 var (
-	CollectHandler  http.HandlerFunc
-	RetreiveHandler http.HandlerFunc
+	CollectHandler http.HandlerFunc
 )
 
 func Init() error {
@@ -31,7 +29,6 @@ func Init() error {
 
 	if config.ListenHttp != "" {
 		CollectHandler = GenerateHttpCollector()
-		RetreiveHandler = GenerateArchiveEndpoint(drain.Archiver)
 		config.Log.Info("Collector listening on http://%v...", config.ListenHttp)
 	}
 
