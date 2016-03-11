@@ -14,6 +14,19 @@ Incomplete/Experimental
 Currently uses around 600k of memory while idling.
 
 ## Usage
+#### Quickstart
+```
+# start server with defaults
+logvac -s
+# add auth token
+logvac add-token -t user
+# add a log via http
+curl -k https://127.0.0.1:1234 -H "X-AUTH-TOKEN: user" -d '{"id":"log-test","type":"test","message":"my first log"}'
+# view log via http
+curl -k https://127.0.0.1:1234?type=test -H "X-AUTH-TOKEN: user"
+# Congratulations logmaster!
+```
+
 ```
   logvac [flags]
   logvac [command]
@@ -69,8 +82,8 @@ logvac -c logvac.json
 logvac -s
 ```
 
-### Cli uses
-`export|import`
+#### Cli uses
+export|import
 ```sh
 # logvac export dumps the authenticator's database for importing to another authenticator database
 logvac export | logvac import -A '/tmp/copy-log-auth.bolt'
@@ -78,13 +91,13 @@ logvac export | logvac import -A '/tmp/copy-log-auth.bolt'
 # works with files too
 logvac export -f log-auth.dump
 ```
-`add-token`
+add-token
 ```sh
 # unless the end user sets auth-address to "", an auth-token will need to be added in order to publish/fetch logs via http
 logvac add-token -t "user1-token"
 ```
 
-### Adding|Viewing Logs
+#### Adding|Viewing Logs
 See syslog examples [here](../collector/README.md)  
 See http examples [here](../api/README.md)  
 **Important Note:** javascript clients may see up-to a ~100 nanosecond variance when specifying 'start=xxx' as a query parameter due to javascript's lack of precision for the 'number' datatype  
