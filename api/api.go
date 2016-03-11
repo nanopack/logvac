@@ -24,6 +24,7 @@ func Start(collector http.HandlerFunc) error {
 
 	router.Get("/add-token", handleRequest(addKey))
 	router.Get("/remove-token", handleRequest(removeKey))
+	router.Add("OPTIONS", "/", handleRequest(cors))
 
 	router.Post("/", verify(handleRequest(collector)))
 	router.Get("/", verify(handleRequest(retriever)))
@@ -42,12 +43,22 @@ func Start(collector http.HandlerFunc) error {
 	return auth.ListenAndServeTLS(config.ListenHttp, config.Token, router, "/")
 }
 
+func cors(rw http.ResponseWriter, req *http.Request) {
+	// todo: allow something more specific than "*"
+	rw.Header().Set("Access-Control-Allow-Origin", "*")
+	rw.Header().Set("Access-Control-Allow-Methods", "GET, POST")
+	rw.Header().Set("Access-Control-Allow-Headers", "X-ADMIN-TOKEN, X-AUTH-TOKEN")
+	rw.WriteHeader(200)
+	rw.Write([]byte("success!\n"))
+}
+
 // handleRequest add a bit of logging
 func handleRequest(fn http.HandlerFunc) http.HandlerFunc {
 	return func(rw http.ResponseWriter, req *http.Request) {
-		if config.Insecure {
-			rw.Header().Set("Access-Control-Allow-Origin", "*")
-		}
+		// todo: allow something more specific than "*"
+		rw.Header().Set("Access-Control-Allow-Origin", "*")
+		rw.Header().Set("Access-Control-Allow-Methods", "GET, POST")
+		rw.Header().Set("Access-Control-Allow-Headers", "X-ADMIN-TOKEN, X-AUTH-TOKEN")
 
 		fn(rw, req)
 

@@ -14,7 +14,6 @@ func addKey(rw http.ResponseWriter, req *http.Request) {
 	}
 	rw.WriteHeader(200)
 	rw.Write([]byte("success!\n"))
-
 }
 
 func removeKey(rw http.ResponseWriter, req *http.Request) {
