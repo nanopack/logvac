@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"time"
@@ -25,6 +26,10 @@ type (
 )
 
 func NewBoltArchive(path string) (*BoltArchive, error) {
+	err := os.MkdirAll(filepath.Dir(path), 755)
+	if err != nil {
+		return nil, err
+	}
 	d, err := bolt.Open(path, 0600, nil)
 	if err != nil {
 		return nil, err

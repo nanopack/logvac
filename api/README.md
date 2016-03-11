@@ -18,6 +18,7 @@ Note: * = only if 'auth-address' configured
 ### Query Parameters:
 | Parameter | Description |
 | --- | --- |
+| **auth** | Replacement for 'X-AUTH-TOKEN' |
 | **id** | Filter by id |
 | **tag** | Filter by tag |
 | **type** | Filter by type |

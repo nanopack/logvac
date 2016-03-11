@@ -3,7 +3,6 @@ package drain
 import (
 	"encoding/json"
 
-	// mistCore "github.com/nanopack/mist/core"
 	mistCore "github.com/nanopack/mist/clients"
 
 	"github.com/nanopack/logvac/config"

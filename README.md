@@ -19,7 +19,7 @@ logvac add-token -t user
 curl -k https://127.0.0.1:1234 -H "X-AUTH-TOKEN: user" \
      -d '{"id":"log-test","type":"test","message":"my first log"}'
 # view log via http
-curl -k https://127.0.0.1:1234?type=test -H "X-AUTH-TOKEN: user"
+curl -k "https://127.0.0.1:1234?type=test&auth=user"
 # Congratulations logmaster!
 ```
 
@@ -68,7 +68,7 @@ Config File: (takes precedence over cli flags)
   "log-level": "info",
   "token": "secret",
   "insecure": false,
-  "server": true // default is false
+  "server": true
 }
 ```
 

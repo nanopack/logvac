@@ -6,6 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
+	"path/filepath"
 
 	"github.com/boltdb/bolt"
 
@@ -20,6 +22,10 @@ type (
 
 // NewBoltDb creates a new boltdb (currently, it is critical to set dbAddr)
 func NewBoltDb(config string) (*boltdb, error) {
+	err := os.MkdirAll(filepath.Dir(config), 755)
+	if err != nil {
+		return nil, err
+	}
 	d, err := bolt.Open(config, 0600, nil)
 	if err != nil {
 		return nil, err

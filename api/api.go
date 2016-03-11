@@ -64,6 +64,11 @@ func handleRequest(fn http.HandlerFunc) http.HandlerFunc {
 func verify(fn http.HandlerFunc) http.HandlerFunc {
 	return func(rw http.ResponseWriter, req *http.Request) {
 		key := req.Header.Get("X-AUTH-TOKEN")
+		// allow browsers to authenticate/fetch logs
+		if key == "" {
+			query := req.URL.Query()
+			key = query.Get("auth")
+		}
 		if !authenticator.Valid(key) {
 			rw.WriteHeader(401)
 			return
