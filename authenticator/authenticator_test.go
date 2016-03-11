@@ -134,7 +134,9 @@ func rest(method, route, data string) ([]byte, error) {
 // manually configure and start internals
 func initialize() {
 	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
-	config.ListenHttp = "127.0.0.1:2234"
+	config.ListenHttp = "127.0.0.1:3234"
+	config.ListenTcp = "127.0.0.1:3235"
+	config.ListenUdp = "127.0.0.1:3234"
 	config.DbAddress = "boltdb:///tmp/authTest/logvac.bolt"
 	config.AuthAddress = "boltdb:///tmp/authTest/logvac-auth.bolt"
 	config.Log = lumber.NewConsoleLogger(lumber.LvlInt("ERROR"))

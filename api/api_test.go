@@ -93,6 +93,8 @@ func rest(method, route, data string) ([]byte, error) {
 func initialize() {
 	config.Insecure = true
 	config.ListenHttp = "127.0.0.1:2234"
+	config.ListenTcp = "127.0.0.1:2235"
+	config.ListenUdp = "127.0.0.1:2234"
 	config.DbAddress = "boltdb:///tmp/logvacTest/logvac.bolt"
 	config.AuthAddress = ""
 	config.Log = lumber.NewConsoleLogger(lumber.LvlInt("ERROR"))
