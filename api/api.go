@@ -23,8 +23,11 @@ func Start(collector http.HandlerFunc, retriever http.HandlerFunc) error {
 	router.Get("/", verify(handleRequest(retriever)))
 
 	// blocking...
+	if config.Insecure {
+		config.Log.Info("Api Listening on http://%s...", config.ListenHttp)
+		return http.ListenAndServe(config.ListenHttp, router)
+	}
 	config.Log.Info("Api Listening on https://%s...", config.ListenHttp)
-
 	return nanoauth.ListenAndServeTLS(config.ListenHttp, config.Token, router, "/")
 }
 

@@ -39,6 +39,7 @@ logvac -s --pub-address="127.0.0.1:1445" --db-address="/tmp/logvac.boltdb" --tok
 
 - Documentation
 - Tests
+- Reconnect to publisher on disconnect
 
 ### Contributing
 

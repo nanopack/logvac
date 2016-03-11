@@ -27,6 +27,7 @@ var (
 	LogLevel = "info"
 	Token    = "secret"
 	Log      lumber.Logger
+	Insecure = false
 	Server   = false
 )
 
@@ -49,6 +50,7 @@ func AddFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVarP(&LogType, "log-type", "L", LogType, "Default type to apply to incoming logs (commonly used: app|deploy)")
 	cmd.Flags().StringVarP(&Token, "token", "T", Token, "Token security")
 	cmd.Flags().BoolVarP(&Server, "server", "s", Server, "Run as server")
+	cmd.Flags().BoolVarP(&Insecure, "insecure", "i", Insecure, "Don't use TLS (used for testing)")
 
 	Log = lumber.NewConsoleLogger(lumber.LvlInt(LogLevel))
 }
@@ -70,6 +72,7 @@ func ReadConfigFile(configFile string) error {
 	viper.SetDefault("log-type", LogType)
 	viper.SetDefault("token", Token)
 	viper.SetDefault("server", Server)
+	viper.SetDefault("insecure", Insecure)
 
 	filename := filepath.Base(configFile)
 	viper.SetConfigName(filename[:len(filename)-len(filepath.Ext(filename))])
@@ -92,6 +95,7 @@ func ReadConfigFile(configFile string) error {
 	LogType = viper.GetString("log-type")
 	Token = viper.GetString("token")
 	Server = viper.GetBool("server")
+	Insecure = viper.GetBool("insecure")
 
 	return nil
 }

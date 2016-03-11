@@ -61,6 +61,7 @@ func GenerateHttpCollector() http.HandlerFunc {
 	}
 }
 
+// note: javascript number precision may cause unexpected results (missing logs within 100 nanosecond window)
 func GenerateArchiveEndpoint(archive drain.ArchiverDrain) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
 		query := req.URL.Query()
@@ -86,7 +87,7 @@ func GenerateArchiveEndpoint(archive drain.ArchiverDrain) http.HandlerFunc {
 		}
 		config.Log.Trace("type: %v, start: %v, limit: %v, level: %v, id: %v, tag: %v", kind, start, limit, level, host, tag)
 		logLevel := lumber.LvlInt(level)
-		realOffset, err := strconv.ParseUint(start, 0, 64)
+		realOffset, err := strconv.ParseInt(start, 0, 64)
 		if err != nil {
 			res.WriteHeader(500)
 			res.Write([]byte("bad start offset"))

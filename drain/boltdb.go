@@ -44,7 +44,7 @@ func (a *BoltArchive) Init() error {
 	return nil
 }
 
-func (a *BoltArchive) Slice(name, host, tag string, offset, limit uint64, level int) ([]logvac.Message, error) {
+func (a *BoltArchive) Slice(name, host, tag string, offset, limit int64, level int) ([]logvac.Message, error) {
 	var messages []logvac.Message
 
 	err = a.db.View(func(tx *bolt.Tx) error {
@@ -66,12 +66,12 @@ func (a *BoltArchive) Slice(name, host, tag string, offset, limit uint64, level 
 			return err
 		}
 
-		c.Seek(initial.Bytes())
-		for k, v := c.First(); k != nil && limit > 0; k, v = c.Next() {
+		for k, v := c.Seek(initial.Bytes()); k != nil && limit > 0; k, v = c.Next() {
 			msg := logvac.Message{}
 			if err := json.Unmarshal(v, &msg); err != nil {
 				return fmt.Errorf("Couldn't unmarshal message - %v", err)
 			}
+
 			if msg.Priority >= level {
 				if msg.Id == host || host == "" {
 					if msg.Tag == tag || tag == "" {
@@ -95,7 +95,6 @@ func (a *BoltArchive) Slice(name, host, tag string, offset, limit uint64, level 
 func (a *BoltArchive) Write(msg logvac.Message) {
 	config.Log.Trace("Bolt archive writing...")
 	err = a.db.Batch(func(tx *bolt.Tx) error {
-		// err = a.db.Update(func(tx *bolt.Tx) error {
 		bucket, err := tx.CreateBucketIfNotExists([]byte(msg.Type))
 		if err != nil {
 			return err
@@ -108,12 +107,6 @@ func (a *BoltArchive) Write(msg logvac.Message) {
 
 		// this needs to ensure lexographical order
 		key := &bytes.Buffer{}
-		// nextLine, err := bucket.NextSequence()
-		// if err != nil {
-		// 	return err
-		// }
-
-		// if err = binary.Write(key, binary.BigEndian, nextLine); err != nil {
 		if err = binary.Write(key, binary.BigEndian, msg.UTime); err != nil {
 			return err
 		}
@@ -148,7 +141,7 @@ func (a *BoltArchive) Expire() {
 		for k, v := range logKeep { // todo: maybe rather/also loop through buckets
 			switch v.(type) {
 			case string:
-				var logTime = time.Now().UnixNano()
+				var expireTime = time.Now().UnixNano()
 
 				r, _ := regexp.Compile("([0-9]+)([a-zA-Z]+)")
 				var (
@@ -184,7 +177,7 @@ func (a *BoltArchive) Expire() {
 					}
 				}
 
-				logTime = logTime - duration
+				expireTime = expireTime - duration
 
 				a.db.Update(func(tx *bolt.Tx) error {
 					bucket := tx.Bucket([]byte(k))
@@ -202,7 +195,7 @@ func (a *BoltArchive) Expire() {
 						if err != nil {
 							config.Log.Fatal("Bad JSON syntax in log message - %v", err)
 						}
-						if logMessage.UTime < logTime {
+						if logMessage.UTime < expireTime {
 							config.Log.Trace("Deleting expired log of type '%v'...", k)
 							err = c.Delete()
 							if err != nil {
