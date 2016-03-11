@@ -15,13 +15,14 @@ Currently uses around 600k of memory while idling.
 
 ## Usage
 #### Quickstart
-```
+```sh
 # start server with defaults
 logvac -s
 # add auth token
 logvac add-token -t user
 # add a log via http
-curl -k https://127.0.0.1:1234 -H "X-AUTH-TOKEN: user" -d '{"id":"log-test","type":"test","message":"my first log"}'
+curl -k https://127.0.0.1:1234 -H "X-AUTH-TOKEN: user" \
+     -d '{"id":"log-test","type":"test","message":"my first log"}'
 # view log via http
 curl -k https://127.0.0.1:1234?type=test -H "X-AUTH-TOKEN: user"
 # Congratulations logmaster!
