@@ -26,11 +26,11 @@ type (
 )
 
 func NewBoltArchive(path string) (*BoltArchive, error) {
-	err := os.MkdirAll(filepath.Dir(path), 755)
+	err := os.MkdirAll(filepath.Dir(path), 0755)
 	if err != nil {
 		return nil, err
 	}
-	d, err := bolt.Open(path, 0600, nil)
+	d, err := bolt.Open(path, 0644, nil)
 	if err != nil {
 		return nil, err
 	}

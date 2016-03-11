@@ -22,7 +22,7 @@ type (
 
 // NewBoltDb creates a new boltdb (currently, it is critical to set dbAddr)
 func NewBoltDb(config string) (*boltdb, error) {
-	err := os.MkdirAll(filepath.Dir(config), 755)
+	err := os.MkdirAll(filepath.Dir(config), 0755)
 	if err != nil {
 		return nil, err
 	}

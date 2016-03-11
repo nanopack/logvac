@@ -9,8 +9,8 @@ Simple, lightweight, api-driven log aggregation service with realtime push capab
 
 | Route | Description | Payload | Output |
 | --- | --- | --- | --- |
-| **Get** /remove-key | Remove a log read/write key | *'X-AUTH-TOKEN' and 'X-ADMIN-TOKEN' headers  | nil |
-| **Get** /add-key | Add a log read/write key | *'X-AUTH-TOKEN' and 'X-ADMIN-TOKEN' headers  | nil |
+| **Get** /remove-token | Remove a log read/write token | *'X-AUTH-TOKEN' and 'X-ADMIN-TOKEN' headers  | success message string |
+| **Get** /add-token | Add a log read/write token | *'X-AUTH-TOKEN' and 'X-ADMIN-TOKEN' headers  | success message string |
 | **Post** / | Post a log | *'X-AUTH-TOKEN' header and json Log object | success message string |
 | **Get** / | List all services | *'X-AUTH-TOKEN' header | json array of Log objects |
 Note: * = only if 'auth-address' configured

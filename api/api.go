@@ -16,8 +16,8 @@ import (
 func Start(collector http.HandlerFunc, retriever http.HandlerFunc) error {
 	router := pat.New()
 
-	router.Get("/add-key", handleRequest(addKey))
-	router.Get("/remove-key", handleRequest(removeKey))
+	router.Get("/add-token", handleRequest(addKey))
+	router.Get("/remove-token", handleRequest(removeKey))
 
 	router.Post("/", verify(handleRequest(collector)))
 	router.Get("/", verify(handleRequest(retriever)))
