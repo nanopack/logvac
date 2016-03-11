@@ -6,7 +6,7 @@ import (
 	"regexp"
 
 	"github.com/gorilla/pat"
-	"github.com/nanobox-io/nanoauth" // todo: use golang-nanoauth
+	"github.com/nanobox-io/golang-nanoauth"
 
 	"github.com/nanopack/logvac/authenticator"
 	"github.com/nanopack/logvac/config"
@@ -28,7 +28,12 @@ func Start(collector http.HandlerFunc, retriever http.HandlerFunc) error {
 		return http.ListenAndServe(config.ListenHttp, router)
 	}
 	config.Log.Info("Api Listening on https://%s...", config.ListenHttp)
-	return nanoauth.ListenAndServeTLS(config.ListenHttp, config.Token, router, "/")
+	cert, _ := nanoauth.Generate("nanobox.io")
+	auth := nanoauth.Auth{
+		Header:      "X-ADMIN-TOKEN",
+		Certificate: cert,
+	}
+	return auth.ListenAndServeTLS(config.ListenHttp, config.Token, router, "/")
 }
 
 // handleRequest add a bit of logging
@@ -58,7 +63,7 @@ func handleRequest(fn http.HandlerFunc) http.HandlerFunc {
 // verify that the token is allowed throught the authenticator
 func verify(fn http.HandlerFunc) http.HandlerFunc {
 	return func(rw http.ResponseWriter, req *http.Request) {
-		key := req.Header.Get("X-LOGVAC-KEY")
+		key := req.Header.Get("X-AUTH-TOKEN")
 		if !authenticator.Valid(key) {
 			rw.WriteHeader(401)
 			return

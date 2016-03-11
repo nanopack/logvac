@@ -9,10 +9,10 @@ Simple, lightweight, api-driven log aggregation service with realtime push capab
 
 | Route | Description | Payload | Output |
 | --- | --- | --- | --- |
-| **Get** /remove-key | Remove a log read/write key | *'X-LOGVAC-KEY' and 'X-NANOBOX-TOKEN' headers  | nil |
-| **Get** /add-key | Add a log read/write key | *'X-LOGVAC-KEY' and 'X-NANOBOX-TOKEN' headers  | nil |
-| **Post** / | Post a log | *'X-LOGVAC-KEY' header and json Log object | success message string |
-| **Get** / | List all services | *'X-LOGVAC-KEY' header | json array of Log objects |
+| **Get** /remove-key | Remove a log read/write key | *'X-AUTH-TOKEN' and 'X-ADMIN-TOKEN' headers  | nil |
+| **Get** /add-key | Add a log read/write key | *'X-AUTH-TOKEN' and 'X-ADMIN-TOKEN' headers  | nil |
+| **Post** / | Post a log | *'X-AUTH-TOKEN' header and json Log object | success message string |
+| **Get** / | List all services | *'X-AUTH-TOKEN' header | json array of Log objects |
 Note: * = only if 'auth-address' configured
 
 ### Query Parameters:
@@ -48,17 +48,17 @@ Note: * = only if 'auth-address' configured
 Note: * = required on submit
 
 
-## Usage (including http collector)
+## Usage
 
 add auth key - attempt
 ```
-$ curl -ik https://localhost:1234/add-key -H 'X-LOGVAC-KEY: user'
+$ curl -ik https://localhost:1234/add-key -H 'X-AUTH-TOKEN: user'
 HTTP/1.1 401 Unauthorized
 ```
 
 add auth key - success
 ```
-$ curl -ik https://localhost:1234/add-key -H 'X-LOGVAC-KEY: user' -H 'X-NANOBOX-TOKEN: secret'
+$ curl -ik https://localhost:1234/add-key -H 'X-AUTH-TOKEN: user' -H 'X-ADMIN-TOKEN: secret'
 HTTP/1.1 200 OK
 ```
 
@@ -70,20 +70,20 @@ HTTP/1.1 401 Unauthorized
 
 publish log - success
 ```
-$ curl -ik https://localhost:1234 -H 'X-LOGVAC-KEY: user' -d '{"id":"my-app","type":"deploy","message":"$ mv nanobox/.htaccess .htaccess\n[✓] SUCCESS"}'
+$ curl -ik https://localhost:1234 -H 'X-AUTH-TOKEN: user' -d '{"id":"my-app","type":"deploy","message":"$ mv nanobox/.htaccess .htaccess\n[✓] SUCCESS"}'
 sucess!
 HTTP/1.1 200 OK
 ```
 
 get deploy logs
 ```
-$ curl -k https://localhost:1234?kind=deploy -H 'X-LOGVAC-KEY: user'
+$ curl -k https://localhost:1234?kind=deploy -H 'X-AUTH-TOKEN: user'
 [{"time":"2016-03-07T15:48:57.668893791-07:00","id":"my-app","tag":"","type":"deploy","priority":0,"message":"$ mv nanobox/.htaccess .htaccess\n[✓] SUCCESS"}]
 ```
 
 get app logs
 ```
-$ curl -k https://localhost:1234 -H 'X-LOGVAC-KEY: user'
+$ curl -k https://localhost:1234 -H 'X-AUTH-TOKEN: user'
 []
 ```
 
@@ -96,4 +96,3 @@ Contributions to the logvac project are welcome and encouraged. Logvac is a [Nan
 Mozilla Public License Version 2.0
 
 [![open source](http://nano-assets.gopagoda.io/open-src/nanobox-open-src.png)](http://nanobox.io/open-source)
-

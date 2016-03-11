@@ -99,7 +99,7 @@ func GenerateArchiveEndpoint(archive drain.ArchiverDrain) http.HandlerFunc {
 			res.Write([]byte("bad limit"))
 			return
 		}
-		slices, err := archive.Slice(kind, host, tag, realOffset, uint64(realLimit), logLevel)
+		slices, err := archive.Slice(kind, host, tag, realOffset, int64(realLimit), logLevel)
 		if err != nil {
 			res.WriteHeader(500)
 			res.Write([]byte(err.Error()))

@@ -19,10 +19,11 @@ import (
 var (
 	configFile string
 	portFile   string
+	tokenName  string
 
 	exportCommand = &cobra.Command{
 		Use:   "export",
-		Short: "Export authenticators",
+		Short: "Export http publish/subscribe authentication tokens",
 		Long:  ``,
 
 		Run: exportLogvac,
@@ -30,10 +31,18 @@ var (
 
 	importCommand = &cobra.Command{
 		Use:   "import",
-		Short: "Import authenticators",
+		Short: "Import http publish/subscribe authentication tokens",
 		Long:  ``,
 
 		Run: importLogvac,
+	}
+
+	addKeyCommand = &cobra.Command{
+		Use:   "add-token",
+		Short: "Add http publish/subscribe authentication token",
+		Long:  ``,
+
+		Run: addKey,
 	}
 
 	Logvac = &cobra.Command{
@@ -49,10 +58,12 @@ func main() {
 	Logvac.Flags().StringVarP(&configFile, "config-file", "c", "", "config file location for server")
 	Logvac.AddCommand(exportCommand)
 	Logvac.AddCommand(importCommand)
+	Logvac.AddCommand(addKeyCommand)
 
 	config.AddFlags(Logvac)
 	exportCommand.Flags().StringVarP(&portFile, "file", "f", "", "Export file location")
 	importCommand.Flags().StringVarP(&portFile, "file", "f", "", "Import file location")
+	addKeyCommand.Flags().StringVarP(&tokenName, "token", "t", "", "Authentication token for http publish/subscribe")
 
 	Logvac.Execute()
 }
@@ -145,5 +156,18 @@ func importLogvac(ccmd *cobra.Command, args []string) {
 	err = authenticator.ImportLogvac(importReader)
 	if err != nil {
 		config.Log.Fatal("Failed to import - %v", err)
+	}
+}
+
+func addKey(ccmd *cobra.Command, args []string) {
+	err := authenticator.Init()
+	if err != nil {
+		config.Log.Fatal("Authenticator failed to initialize - %v", err)
+		os.Exit(1)
+	}
+
+	err = authenticator.Add(tokenName)
+	if err != nil {
+		config.Log.Fatal("Failed to add token '%v' - %v", tokenName, err)
 	}
 }
