@@ -27,7 +27,10 @@ func TestMain(m *testing.M) {
 	os.RemoveAll("/tmp/logvacTest")
 
 	// manually configure
-	initialize()
+	err := initialize()
+	if err != nil {
+		os.Exit(1)
+	}
 
 	// start api
 	go api.Start(collector.CollectHandler)
@@ -40,20 +43,25 @@ func TestMain(m *testing.M) {
 	os.Exit(rtn)
 }
 
-// test adding an auth token
-func TestAddToken(t *testing.T) {
-	body, err := rest("GET", "/add-token", "")
+// test removing an auth token
+func TestRemoveToken(t *testing.T) {
+	err := authenticator.Remove("nobody")
 	if err != nil {
 		t.Error(err)
 		t.FailNow()
 	}
-	if string(body) != "success!\n" {
-		t.Errorf("%q doesn't match expected out", body)
+}
+
+// test adding an auth token
+func TestAddToken(t *testing.T) {
+	err := authenticator.Add("user")
+	if err != nil {
+		t.Error(err)
 		t.FailNow()
 	}
 }
 
-// test get logs
+// test get logs // doesn't provide any "coverage" but ensures auth works
 func TestGetLogs(t *testing.T) {
 	body, err := rest("GET", "/?type=app", "")
 	if err != nil {
@@ -97,19 +105,6 @@ func TestExport(t *testing.T) {
 	}
 }
 
-// test removing an auth token
-func TestRemoveToken(t *testing.T) {
-	body, err := rest("GET", "/remove-token", "")
-	if err != nil {
-		t.Error(err)
-		t.FailNow()
-	}
-	if string(body) != "success!\n" {
-		t.Errorf("%q doesn't match expected out", body)
-		t.FailNow()
-	}
-}
-
 // hit api and return response body
 func rest(method, route, data string) ([]byte, error) {
 	body := bytes.NewBuffer([]byte(data))
@@ -134,36 +129,50 @@ func rest(method, route, data string) ([]byte, error) {
 }
 
 // manually configure and start internals
-func initialize() {
+func initialize() error {
 	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 	config.ListenHttp = "127.0.0.1:3234"
 	config.ListenTcp = "127.0.0.1:3235"
 	config.ListenUdp = "127.0.0.1:3234"
 	config.DbAddress = "boltdb:///tmp/authTest/logvac.bolt"
-	config.AuthAddress = "boltdb:///tmp/authTest/logvac-auth.bolt"
 	config.Log = lumber.NewConsoleLogger(lumber.LvlInt("ERROR"))
 
 	// initialize logvac
 	logvac.Init()
 
 	// setup authenticator
+	config.AuthAddress = ""
 	err := authenticator.Init()
 	if err != nil {
-		config.Log.Fatal("Authenticator failed to initialize - %v", err)
-		os.Exit(1)
+		return fmt.Errorf("Authenticator failed to initialize - %v", err)
+	}
+	config.AuthAddress = "file:///tmp/authTest/logvac-auth.bolt"
+	err = authenticator.Init()
+	if err != nil {
+		return fmt.Errorf("Authenticator failed to initialize - %v", err)
+	}
+	config.AuthAddress = "~!@#$%^&*()_"
+	err = authenticator.Init()
+	if err == nil {
+		return fmt.Errorf("Authenticator failed to initialize - %v", err)
+	}
+	config.AuthAddress = "boltdb:///tmp/authTest/logvac-auth.bolt"
+	err = authenticator.Init()
+	if err != nil {
+		return fmt.Errorf("Authenticator failed to initialize - %v", err)
 	}
 
 	// initialize drains
 	err = drain.Init()
 	if err != nil {
-		config.Log.Fatal("Drain failed to initialize - %v", err)
-		os.Exit(1)
+		return fmt.Errorf("Drain failed to initialize - %v", err)
 	}
 
 	// initializes collectors
 	err = collector.Init()
 	if err != nil {
-		config.Log.Fatal("Collector failed to initialize - %v", err)
-		os.Exit(1)
+		return fmt.Errorf("Collector failed to initialize - %v", err)
 	}
+
+	return nil
 }

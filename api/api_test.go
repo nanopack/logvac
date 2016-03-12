@@ -3,11 +3,13 @@ package api_test
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -21,6 +23,11 @@ import (
 	"github.com/nanopack/logvac/drain"
 )
 
+var (
+	secureHttp   string
+	insecureHttp string
+)
+
 func TestMain(m *testing.M) {
 	// clean test dir
 	os.RemoveAll("/tmp/apiTest")
@@ -28,7 +35,12 @@ func TestMain(m *testing.M) {
 	// manually configure
 	initialize()
 
-	// start api
+	// start insecure api
+	go api.Start(collector.CollectHandler)
+	time.Sleep(time.Second)
+	// start secure api
+	config.Insecure = false
+	config.ListenHttp = secureHttp
 	go api.Start(collector.CollectHandler)
 	<-time.After(1 * time.Second)
 	rtn := m.Run()
@@ -39,9 +51,46 @@ func TestMain(m *testing.M) {
 	os.Exit(rtn)
 }
 
+// test cors
+func TestCors(t *testing.T) {
+	body, err := irest("OPTIONS", "/?type=app&id=log-test&start=0&limit=1", "")
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
+	}
+	if string(body) != "success!\n" {
+		t.Errorf("%q doesn't match expected out", body)
+		t.FailNow()
+	}
+}
+
+// test adding an auth token
+func TestAddToken(t *testing.T) {
+	body, err := rest("GET", "/add-token", "")
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
+	}
+	if string(body) != "success!\n" {
+		t.Errorf("%q doesn't match expected out", body)
+		t.FailNow()
+	}
+}
+
 // test post logs
 func TestPostLogs(t *testing.T) {
+	// secure
 	body, err := rest("POST", "/", "{\"id\":\"log-test\",\"type\":\"app\",\"message\":\"test log\"}")
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
+	}
+	if string(body) != "success!\n" {
+		t.Errorf("%q doesn't match expected out", body)
+		t.FailNow()
+	}
+	// insecure
+	body, err = irest("POST", "/", "{\"id\":\"log-test\",\"type\":\"app\",\"message\":\"test log\"}")
 	if err != nil {
 		t.Error(err)
 		t.FailNow()
@@ -56,7 +105,7 @@ func TestPostLogs(t *testing.T) {
 
 // test get logs
 func TestGetLogs(t *testing.T) {
-	body, err := rest("GET", "/?type=app&id=log-test&start=0&limit=1", "")
+	body, err := irest("GET", "/?type=app&id=log-test&start=0&limit=1", "")
 	if err != nil {
 		t.Error(err)
 		t.FailNow()
@@ -67,17 +116,71 @@ func TestGetLogs(t *testing.T) {
 		t.Error(fmt.Errorf("Failed to unmarshal - %v", err))
 		t.FailNow()
 	}
-
 	if len(msg) != 1 || msg[0].Content != "test log" {
 		t.Errorf("%q doesn't match expected out", body)
+	}
+	_, err = irest("GET", "/", "")
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
+	}
+	_, err = irest("GET", "/?start=word", "")
+	if err == nil || strings.Contains(err.Error(), "bad start offset") {
+		t.Error("bad start is too forgiving")
+		t.FailNow()
+	}
+	_, err = irest("GET", "/?limit=word", "")
+	if err == nil || strings.Contains(err.Error(), "bad limit") {
+		t.Error("bad limit is too forgiving")
+		t.FailNow()
+	}
+	_, err = irest("GET", "/?level=word", "")
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
+	}
+}
+
+// test removing an auth token
+func TestRemoveToken(t *testing.T) {
+	body, err := rest("GET", "/remove-token", "")
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
+	}
+	if string(body) != "success!\n" {
+		t.Errorf("%q doesn't match expected out", body)
+		t.FailNow()
 	}
 }
 
 // hit api and return response body
+func irest(method, route, data string) ([]byte, error) {
+	body := bytes.NewBuffer([]byte(data))
+
+	req, _ := http.NewRequest(method, fmt.Sprintf("http://%s%s", insecureHttp, route), body)
+
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("Unable to %v %v - %v", method, route, err)
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != 200 {
+		return nil, fmt.Errorf("Status '200' expected, got '%d'", res.StatusCode)
+	}
+
+	b, _ := ioutil.ReadAll(res.Body)
+
+	return b, nil
+}
+
 func rest(method, route, data string) ([]byte, error) {
 	body := bytes.NewBuffer([]byte(data))
 
-	req, _ := http.NewRequest(method, fmt.Sprintf("http://%s%s", config.ListenHttp, route), body)
+	req, _ := http.NewRequest(method, fmt.Sprintf("https://%s%s", secureHttp, route), body)
+	req.Header.Add("X-ADMIN-TOKEN", "secret")
+	req.Header.Add("X-AUTH-TOKEN", "user")
 
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -96,6 +199,9 @@ func rest(method, route, data string) ([]byte, error) {
 
 // manually configure and start internals
 func initialize() {
+	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+	secureHttp = "127.0.0.1:2236"
+	insecureHttp = "127.0.0.1:2234"
 	config.Insecure = true
 	config.ListenHttp = "127.0.0.1:2234"
 	config.ListenTcp = "127.0.0.1:2235"
