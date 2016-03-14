@@ -96,9 +96,9 @@ func RemoveDrain(tag string) {
 }
 
 func (l *Logvac) removeDrain(tag string) {
-	drain, ok := l.drains[tag]
+	_, ok := l.drains[tag]
 	if ok {
-		close(drain.done)
+		close(l.drains[tag].done)
 		delete(l.drains, tag)
 	}
 }

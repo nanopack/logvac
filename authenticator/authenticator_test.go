@@ -24,7 +24,7 @@ import (
 
 func TestMain(m *testing.M) {
 	// clean test dir
-	os.RemoveAll("/tmp/logvacTest")
+	os.RemoveAll("/tmp/authTest")
 
 	// manually configure
 	err := initialize()
@@ -38,7 +38,7 @@ func TestMain(m *testing.M) {
 	rtn := m.Run()
 
 	// clean test dir
-	os.RemoveAll("/tmp/logvacTest")
+	os.RemoveAll("/tmp/authTest")
 
 	os.Exit(rtn)
 }

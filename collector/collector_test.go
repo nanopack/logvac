@@ -41,6 +41,30 @@ func TestMain(m *testing.M) {
 	os.Exit(rtn)
 }
 
+// test post logs
+func TestPostLogs(t *testing.T) {
+	body, err := rest("POST", "/", "{\"id\":\"log-test\",\"type\":\"app\",\"message\":\"test log\"}")
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
+	}
+	if string(body) != "success!\n" {
+		t.Errorf("%q doesn't match expected out", body)
+		t.FailNow()
+	}
+	body, err = rest("POST", "/", "another test log")
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
+	}
+	if string(body) != "success!\n" {
+		t.Errorf("%q doesn't match expected out", body)
+		t.FailNow()
+	}
+	// boltdb seems to take some time committing the record (probably the speed/immediate commit tradeoff)
+	time.Sleep(time.Second)
+}
+
 // test pushing a log via udp
 func TestUdp(t *testing.T) {
 	ServerAddr, err := net.ResolveUDPAddr("udp", config.ListenUdp)
@@ -56,6 +80,12 @@ func TestUdp(t *testing.T) {
 	}
 	defer client.Close()
 
+	_, err = client.Write([]byte("this would have the tag \"syslog-raw\"")) // for testing fakeParser
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
+	}
+	time.Sleep(time.Millisecond)
 	_, err = client.Write([]byte("<83>Mar 11 14:13:12 web2 apache[error] ello, your app is broke"))
 	if err != nil {
 		t.Error(err)
@@ -102,11 +132,11 @@ func TestGetLogs(t *testing.T) {
 		t.FailNow()
 	}
 
-	if len(msg) != 2 || msg[0].Content != "ello, your app is broke" {
+	if len(msg) != 5 || msg[3].Content != "ello, your app is broke" {
 		t.Errorf("%q doesn't match expected out", body)
 		t.FailNow()
 	}
-	if msg[1].Content != "serving some sweet stuff" {
+	if msg[4].Content != "serving some sweet stuff" {
 		t.Errorf("%q doesn't match expected out", body)
 		t.FailNow()
 	}
@@ -135,6 +165,7 @@ func rest(method, route, data string) ([]byte, error) {
 
 // manually configure and start internals
 func initialize() {
+	config.ListenHttp = "127.0.0.1:4234"
 	config.ListenTcp = "127.0.0.1:4235"
 	config.ListenUdp = "127.0.0.1:4234"
 	config.DbAddress = "boltdb:///tmp/syslogTest/logvac.bolt"
@@ -159,18 +190,10 @@ func initialize() {
 		os.Exit(1)
 	}
 
-	// initializes syslog collectors
-	err = collector.SyslogTCPStart(config.ListenTcp)
+	// initializes collectors
+	err = collector.Init()
 	if err != nil {
-		config.Log.Fatal("TCP collector failed to initialize - %v", err)
+		config.Log.Fatal("Collector failed to initialize - %v", err)
 		os.Exit(1)
 	}
-	config.Log.Info("Collector listening on tcp://%v...", config.ListenTcp)
-
-	err = collector.SyslogUDPStart(config.ListenUdp)
-	if err != nil {
-		config.Log.Fatal("UDP collector failed to initialize - %v", err)
-		os.Exit(1)
-	}
-	config.Log.Info("Collector listening on udp://%v...", config.ListenUdp)
 }

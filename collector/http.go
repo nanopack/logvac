@@ -32,7 +32,7 @@ func GenerateHttpCollector() http.HandlerFunc {
 		err = json.Unmarshal(body, &msg)
 		if err != nil {
 			if !strings.Contains(err.Error(), "invalid character") {
-				res.WriteHeader(400)
+				res.WriteHeader(500)
 				res.Write([]byte(err.Error()))
 				return
 			}
@@ -40,7 +40,7 @@ func GenerateHttpCollector() http.HandlerFunc {
 			// keep body as "message" and make up priority
 			msg.Content = string(body)
 			msg.Priority = 2
-			msg.Type = "http-raw" // todo: default to LogType instead?
+			msg.Tag = "http-raw"
 		}
 
 		if msg.Type == "" {
