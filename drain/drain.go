@@ -23,12 +23,12 @@ type (
 	PublisherDrain interface {
 		Init() error
 		// Publish publishes the tagged data
-		Publish(tag []string, data string) error
+		Publish(msg logvac.Message)
 	}
 )
 
 var (
-	publisher PublisherDrain
+	Publisher PublisherDrain
 	Archiver  ArchiverDrain
 )
 
@@ -97,18 +97,18 @@ func publishInit() error {
 	}
 	switch u.Scheme {
 	case "mist":
-		publisher, err = NewMistClient(config.PubAddress)
+		Publisher, err = NewMistClient(u.Host)
 		if err != nil {
 			return err
 		}
 	default:
-		publisher, err = NewMistClient(config.PubAddress)
+		Publisher, err = NewMistClient(u.Host)
 		if err != nil {
 			return err
 		}
 	}
 	// initialize publisher
-	err = publisher.Init()
+	err = Publisher.Init()
 	if err != nil {
 		return err
 	}
