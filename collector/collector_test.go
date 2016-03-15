@@ -52,6 +52,8 @@ func TestPostLogs(t *testing.T) {
 		t.Errorf("%q doesn't match expected out", body)
 		t.FailNow()
 	}
+	// pause for travis
+	time.Sleep(500 * time.Millisecond)
 	body, err = rest("POST", "/", "another test log")
 	if err != nil {
 		t.Error(err)
@@ -85,12 +87,15 @@ func TestUdp(t *testing.T) {
 		t.Error(err)
 		t.FailNow()
 	}
-	time.Sleep(time.Millisecond)
+	// pause for travis
+	time.Sleep(500 * time.Millisecond)
 	_, err = client.Write([]byte("<83>Mar 11 14:13:12 web2 apache[error] ello, your app is broke"))
 	if err != nil {
 		t.Error(err)
 		t.FailNow()
 	}
+	// pause for travis
+	time.Sleep(500 * time.Millisecond)
 }
 
 // test pushing a log via tcp
