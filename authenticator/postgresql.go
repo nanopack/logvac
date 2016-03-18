@@ -3,27 +3,30 @@
 // This Source Code Form is subject to the terms of the Mozilla Public License, v.
 // 2.0. If a copy of the MPL was not distributed with this file, You can obtain one
 // at http://mozilla.org/MPL/2.0/.
-//
+
 package authenticator
 
 import (
 	"database/sql"
+	"io"
+
 	_ "github.com/lib/pq"
 )
 
 type (
-	postgresql struct{
+	postgresql struct {
 		address string
 	}
 )
 
-func init() {
-	Register("postgres", postgresql{})
+func NewPgDb(addr string) (*postgresql, error) {
+	pg := postgresql{
+		address: addr,
+	}
+	return &pg, nil
 }
 
-func (pg postgresql) Setup(address string) error {
-
-	pg.address = address
+func (pg postgresql) initialize() error {
 	// create the tables needed to support mist authentication
 	_, err := pg.exec(`
 CREATE TABLE IF NOT EXISTS tokens (
@@ -33,17 +36,17 @@ CREATE TABLE IF NOT EXISTS tokens (
 	return err
 }
 
-func (p postgresql) Add(token string) error {
+func (p postgresql) add(token string) error {
 	_, err := p.exec("INSERT INTO tokens (token) VALUES ($1)", token)
 	return err
 }
 
-func (p postgresql) Remove(token string) error {
+func (p postgresql) remove(token string) error {
 	_, err := p.exec("DELETE FROM tokens WHERE token = $1", token)
 	return err
 }
 
-func (p postgresql) Valid(token string) bool {
+func (p postgresql) valid(token string) bool {
 	r, err := p.query("select * FROM tokens WHERE token = $1", token)
 	if err != nil {
 		return false
@@ -77,4 +80,12 @@ func (p postgresql) exec(query string, args ...interface{}) (sql.Result, error) 
 	defer client.Close()
 
 	return client.Exec(query, args...)
+}
+
+func (p postgresql) exportLogvac(exportWriter io.Writer) error {
+	return nil
+}
+
+func (p postgresql) importLogvac(importReader io.Reader) error {
+	return nil
 }
