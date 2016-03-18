@@ -13,7 +13,7 @@ Experimental
 ```sh
 # start server with defaults
 logvac -s
-# add auth token
+# add auth token (using default 'auth-address')
 logvac add-token -t user
 # add a log via http
 curl -k https://127.0.0.1:1234 -H "X-AUTH-TOKEN: user" \
@@ -92,6 +92,8 @@ add-token
 ```sh
 # unless the end user sets auth-address to "", an auth-token will need to be added in order to publish/fetch logs via http
 logvac add-token -t "user1-token"
+## if you specified a different auth-address for your server, specify it here as such:
+logvac add-token -t "user1-token" -A "boltdb:///tmp/log-auth.bolt"
 ```
 
 #### Adding|Viewing Logs
@@ -101,8 +103,7 @@ See http examples [here](./api/README.md)
 
 ## Todo
 
-- Documentation
-- Tests
+- Improved documentation
 - Reconnect to publisher on disconnect
 
 ### Contributing

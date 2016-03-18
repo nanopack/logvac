@@ -1,4 +1,5 @@
-// drain_test tests the archiver drain functionality (writing, reading, cleaning)
+// drain_test tests the archiver and publisher drain
+// functionality (writing, reading, cleaning)
 package drain_test
 
 import (

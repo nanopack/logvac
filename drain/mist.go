@@ -13,7 +13,7 @@ type pthinger interface {
 	Publish(tags []string, data string) error
 }
 type Mist struct {
-	mist pthinger
+	mist pthinger // mistCore.tcpClient
 }
 
 func NewMistClient(address string) (*Mist, error) {
