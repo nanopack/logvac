@@ -57,9 +57,9 @@ Config File: (takes precedence over cli flags)
 ```json
 // logvac.json
 {
-  "listen-http": "127.0.0.1:1234",
-  "listen-udp": "127.0.0.1:1234",
-  "listen-tcp": "127.0.0.1:1235",
+  "listen-http": "127.0.0.1:6360",
+  "listen-tcp": "127.0.0.1:6361",
+  "listen-udp": "127.0.0.1:514",
   "pub-address": "",
   "db-address": "boltdb:///var/db/logvac.bolt",
   "auth-address": "boltdb:///var/db/log-auth.bolt",
