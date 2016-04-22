@@ -17,7 +17,7 @@ type Mist struct {
 }
 
 func NewMistClient(address string) (*Mist, error) {
-	c, err := mistCore.New(address)
+	c, err := mistCore.New(address, config.PubAuth)
 	if err != nil {
 		return nil, err
 	}

@@ -49,6 +49,7 @@ Flags:
   -l, --log-level="info": Level at which to log
   -L, --log-type="app": Default type to apply to incoming logs (commonly used: app|deploy)
   -p, --pub-address="": Log publisher (mist) address ("mist://127.0.0.1:1445")
+  -P, --pub-auth="": Log publisher (mist) auth token
   -s, --server[=false]: Run as server
   -T, --token="secret": Administrative token to add/remove `X-AUTH-TOKEN`s used to pub/sub via http
 ```
@@ -61,6 +62,7 @@ Config File: (takes precedence over cli flags)
   "listen-udp": "127.0.0.1:1234",
   "listen-tcp": "127.0.0.1:1235",
   "pub-address": "",
+  "pub-auth": "",
   "db-address": "boltdb:///var/db/logvac.bolt",
   "auth-address": "boltdb:///var/db/log-auth.bolt",
   "log-keep": "{\"app\":\"2w\"}",
@@ -106,11 +108,11 @@ See http examples [here](./api/README.md)
 - Improved documentation
 - Reconnect to publisher on disconnect
 
-### Contributing
+## Contributing
 
 Contributions to the logvac project are welcome and encouraged. Logvac is a [Nanobox](https://nanobox.io) project and contributions should follow the [Nanobox Contribution Process & Guidelines](https://docs.nanobox.io/contributing/).
 
-### Licence
+## Licence
 
 Mozilla Public License Version 2.0
 
