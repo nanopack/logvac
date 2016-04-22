@@ -16,6 +16,7 @@ var (
 
 	// drains
 	PubAddress = "" // mist://127.0.0.1:1445
+	PubAuth    = ""
 	DbAddress  = "boltdb:///var/db/logvac.bolt"
 
 	// authenticator
@@ -39,6 +40,7 @@ func AddFlags(cmd *cobra.Command) {
 
 	// drains
 	cmd.Flags().StringVarP(&PubAddress, "pub-address", "p", PubAddress, "Log publisher (mist) address (\"mist://127.0.0.1:1445\")")
+	cmd.Flags().StringVarP(&PubAuth, "pub-auth", "P", PubAuth, "Log publisher (mist) auth token")
 	cmd.Flags().StringVarP(&DbAddress, "db-address", "d", DbAddress, "Log storage address")
 
 	// authenticator
@@ -65,6 +67,7 @@ func ReadConfigFile(configFile string) error {
 	viper.SetDefault("listen-udp", ListenUdp)
 	viper.SetDefault("listen-tcp", ListenTcp)
 	viper.SetDefault("pub-address", PubAddress)
+	viper.SetDefault("pub-auth", PubAuth)
 	viper.SetDefault("db-address", DbAddress)
 	viper.SetDefault("auth-address", AuthAddress)
 	viper.SetDefault("log-keep", LogKeep)
@@ -88,6 +91,7 @@ func ReadConfigFile(configFile string) error {
 	ListenUdp = viper.GetString("listen-udp")
 	ListenTcp = viper.GetString("listen-tcp")
 	PubAddress = viper.GetString("pub-address")
+	PubAuth = viper.GetString("pub-auth")
 	DbAddress = viper.GetString("db-address")
 	AuthAddress = viper.GetString("auth-address")
 	LogKeep = viper.GetString("log-keep")

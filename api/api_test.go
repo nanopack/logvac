@@ -42,7 +42,7 @@ func TestMain(m *testing.M) {
 	config.Insecure = false
 	config.ListenHttp = secureHttp
 	go api.Start(collector.CollectHandler)
-	<-time.After(1 * time.Second)
+	<-time.After(time.Second)
 	rtn := m.Run()
 
 	// clean test dir
