@@ -16,7 +16,7 @@ logvac -s
 # add auth token (using default 'auth-address')
 logvac add-token -t user
 # add a log via http
-curl -k https://127.0.0.1:1234 -H "X-AUTH-TOKEN: user" \
+curl -k https://127.0.0.1:1234 -H "X-USER-TOKEN: user" \
      -d '{"id":"log-test","type":"test","message":"my first log"}'
 # view log via http
 curl -k "https://127.0.0.1:1234?type=test&auth=user"
@@ -51,7 +51,7 @@ Flags:
   -p, --pub-address="": Log publisher (mist) address ("mist://127.0.0.1:1445")
   -P, --pub-auth="": Log publisher (mist) auth token
   -s, --server[=false]: Run as server
-  -T, --token="secret": Administrative token to add/remove `X-AUTH-TOKEN`s used to pub/sub via http
+  -T, --token="secret": Administrative token to add/remove `X-USER-TOKEN`s used to pub/sub via http
 ```
 
 Config File: (takes precedence over cli flags)

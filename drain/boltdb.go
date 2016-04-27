@@ -57,7 +57,7 @@ func (a BoltArchive) Close() {
 	a.db.Close()
 }
 
-func (a BoltArchive) Slice(name, host, tag string, offset, limit int64, level int) ([]logvac.Message, error) {
+func (a BoltArchive) Slice(name, host, tag string, offset, end, limit int64, level int) ([]logvac.Message, error) {
 	var messages []logvac.Message
 
 	err := a.db.View(func(tx *bolt.Tx) error {
@@ -68,29 +68,45 @@ func (a BoltArchive) Slice(name, host, tag string, offset, limit int64, level in
 			return nil
 		}
 		c := bucket.Cursor()
-		k, _ := c.First()
-		if k == nil {
+		last, _ := c.Last()
+		if last == nil {
 			return nil
 		}
 
 		// skip to the correct id
 		initial := &bytes.Buffer{}
-		if err := binary.Write(initial, binary.BigEndian, offset); err != nil {
+		if offset == 0 {
+			// if no offset value is given, start with last log
+			initial.Write(last)
+		} else {
+			// otherwise, start at their offset
+			if err := binary.Write(initial, binary.BigEndian, offset); err != nil {
+				return err
+			}
+		}
+
+		// end at the specified time (pagination limits still apply)
+		final := &bytes.Buffer{}
+		if err := binary.Write(final, binary.BigEndian, end); err != nil {
 			return err
 		}
 
 		// todo: make limit be len(bucket)? if limit < 0
-		for k, v := c.Seek(initial.Bytes()); k != nil && limit > 0; k, v = c.Next() {
+		for k, v := c.Seek(initial.Bytes()); k != nil && limit > 0; k, v = c.Prev() {
 			msg := logvac.Message{}
 			if err := json.Unmarshal(v, &msg); err != nil {
 				return fmt.Errorf("Couldn't unmarshal message - %v", err)
 			}
-
+			// if specified end is reached, be done
+			if string(k) == final.String() {
+				limit = 0
+			}
 			if msg.Priority >= level {
 				if msg.Id == host || host == "" {
 					if msg.Tag == tag || tag == "" {
 						limit--
-						messages = append(messages, msg)
+						// prepend messages with new message (display newest last)
+						messages = append([]logvac.Message{msg}, messages...)
 					}
 				}
 			}
@@ -201,7 +217,7 @@ func (a BoltArchive) Expire() {
 					a.db.Update(func(tx *bolt.Tx) error {
 						bucket := tx.Bucket([]byte(k))
 						if bucket == nil {
-							config.Log.Debug("No logs of type '%s' found", k)
+							config.Log.Trace("No logs of type '%s' found", k)
 							return fmt.Errorf("No logs of type '%s' found", k)
 						}
 
@@ -229,7 +245,7 @@ func (a BoltArchive) Expire() {
 					a.db.Update(func(tx *bolt.Tx) error {
 						bucket := tx.Bucket([]byte(k))
 						if bucket == nil {
-							config.Log.Debug("No logs of type '%s' found", k)
+							config.Log.Trace("No logs of type '%s' found", k)
 							return fmt.Errorf("No logs of type '%s' found", k)
 						}
 

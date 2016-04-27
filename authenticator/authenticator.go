@@ -1,4 +1,4 @@
-// authenticator handles the management of 'X-AUTH-TOKEN's, allowing an
+// authenticator handles the management of 'X-USER-TOKEN's, allowing an
 // authorized user to add, remove, and validate keys for http log collection.
 package authenticator
 
@@ -62,7 +62,7 @@ func Init() error {
 	return nil
 }
 
-// Add adds an authorized 'X-AUTH-TOKEN' for http collecting
+// Add adds an authorized 'X-USER-TOKEN' for http collecting
 func Add(token string) error {
 	if authenticator == nil {
 		return nil
@@ -71,7 +71,7 @@ func Add(token string) error {
 	return authenticator.add(token)
 }
 
-// Remove removes an authorized 'X-AUTH-TOKEN' for http collecting
+// Remove removes an authorized 'X-USER-TOKEN' for http collecting
 func Remove(token string) error {
 	if authenticator == nil {
 		return nil
@@ -80,7 +80,7 @@ func Remove(token string) error {
 	return authenticator.remove(token)
 }
 
-// Valid validates an authorized 'X-AUTH-TOKEN' for http collecting
+// Valid validates an authorized 'X-USER-TOKEN' for http collecting
 func Valid(token string) bool {
 	if authenticator == nil {
 		return true

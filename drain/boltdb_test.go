@@ -60,7 +60,7 @@ func TestWrite(t *testing.T) {
 	drain.Archiver.Write(messages[1])
 
 	// test successful write
-	appMsgs, err := drain.Archiver.Slice("app", "", "", 0, 100, 0)
+	appMsgs, err := drain.Archiver.Slice("app", "", "", 0, 0, 100, 0)
 	if err != nil {
 		t.Error(err)
 		t.FailNow()
@@ -81,7 +81,7 @@ func TestExpire(t *testing.T) {
 	drain.Archiver.(*drain.BoltArchive).Done <- true
 
 	// test successful clean
-	appMsgs, err := drain.Archiver.Slice("app", "", "", 0, 100, 0)
+	appMsgs, err := drain.Archiver.Slice("app", "", "", 0, 0, 100, 0)
 	if err != nil {
 		t.Error(err)
 		t.FailNow()
@@ -93,7 +93,7 @@ func TestExpire(t *testing.T) {
 	}
 
 	// test successful clean
-	depMsgs, err := drain.Archiver.Slice("deploy", "", "", 0, 100, 0)
+	depMsgs, err := drain.Archiver.Slice("deploy", "", "", 0, 0, 100, 0)
 	if err != nil {
 		t.Error(err)
 		t.FailNow()

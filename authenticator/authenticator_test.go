@@ -110,8 +110,8 @@ func rest(method, route, data string) ([]byte, error) {
 	body := bytes.NewBuffer([]byte(data))
 
 	req, _ := http.NewRequest(method, fmt.Sprintf("https://%s%s", config.ListenHttp, route), body)
-	req.Header.Add("X-ADMIN-TOKEN", "secret")
-	req.Header.Add("X-AUTH-TOKEN", "user")
+	req.Header.Add("X-AUTH-TOKEN", "secret")
+	req.Header.Add("X-USER-TOKEN", "user")
 
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {

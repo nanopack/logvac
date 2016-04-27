@@ -50,7 +50,7 @@ func AddFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVarP(&LogKeep, "log-keep", "k", LogKeep, "Age or number of logs to keep per type `{\"app\":\"2w\", \"deploy\": 10}` (int or X(m)in, (h)our,  (d)ay, (w)eek, (y)ear)")
 	cmd.Flags().StringVarP(&LogLevel, "log-level", "l", LogLevel, "Level at which to log")
 	cmd.Flags().StringVarP(&LogType, "log-type", "L", LogType, "Default type to apply to incoming logs (commonly used: app|deploy)")
-	cmd.Flags().StringVarP(&Token, "token", "T", Token, "Administrative token to add/remove `X-AUTH-TOKEN`s used to pub/sub via http ")
+	cmd.Flags().StringVarP(&Token, "token", "T", Token, "Administrative token to add/remove `X-USER-TOKEN`s used to pub/sub via http ")
 	cmd.Flags().BoolVarP(&Server, "server", "s", Server, "Run as server")
 	cmd.Flags().BoolVarP(&Insecure, "insecure", "i", Insecure, "Don't use TLS (used for testing)")
 

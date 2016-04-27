@@ -37,7 +37,7 @@ func Start(collector http.HandlerFunc) error {
 	config.Log.Info("Api Listening on https://%s...", config.ListenHttp)
 	cert, _ := nanoauth.Generate("nanobox.io")
 	auth := nanoauth.Auth{
-		Header:      "X-ADMIN-TOKEN",
+		Header:      "X-AUTH-TOKEN",
 		Certificate: cert,
 	}
 	return auth.ListenAndServeTLS(config.ListenHttp, config.Token, router, "/")
@@ -47,7 +47,7 @@ func cors(rw http.ResponseWriter, req *http.Request) {
 	// todo: allow something more specific than "*"
 	rw.Header().Set("Access-Control-Allow-Origin", "*")
 	rw.Header().Set("Access-Control-Allow-Methods", "GET, POST")
-	rw.Header().Set("Access-Control-Allow-Headers", "X-ADMIN-TOKEN, X-AUTH-TOKEN")
+	rw.Header().Set("Access-Control-Allow-Headers", "X-AUTH-TOKEN, X-USER-TOKEN")
 	rw.WriteHeader(200)
 	rw.Write([]byte("success!\n"))
 }
@@ -58,7 +58,7 @@ func handleRequest(fn http.HandlerFunc) http.HandlerFunc {
 		// todo: allow something more specific than "*"
 		rw.Header().Set("Access-Control-Allow-Origin", "*")
 		rw.Header().Set("Access-Control-Allow-Methods", "GET, POST")
-		rw.Header().Set("Access-Control-Allow-Headers", "X-ADMIN-TOKEN, X-AUTH-TOKEN")
+		rw.Header().Set("Access-Control-Allow-Headers", "X-AUTH-TOKEN, X-USER-TOKEN")
 
 		fn(rw, req)
 
@@ -83,7 +83,7 @@ func handleRequest(fn http.HandlerFunc) http.HandlerFunc {
 // verify that the token is allowed throught the authenticator
 func verify(fn http.HandlerFunc) http.HandlerFunc {
 	return func(rw http.ResponseWriter, req *http.Request) {
-		key := req.Header.Get("X-AUTH-TOKEN")
+		key := req.Header.Get("X-USER-TOKEN")
 		// allow browsers to authenticate/fetch logs
 		if key == "" {
 			query := req.URL.Query()
@@ -113,6 +113,10 @@ func GenerateArchiveEndpoint(archive drain.ArchiverDrain) http.HandlerFunc {
 		if start == "" {
 			start = "0"
 		}
+		end := query.Get("end")
+		if end == "" {
+			end = "0"
+		}
 		limit := query.Get("limit")
 		if limit == "" {
 			limit = "100"
@@ -121,12 +125,18 @@ func GenerateArchiveEndpoint(archive drain.ArchiverDrain) http.HandlerFunc {
 		if level == "" {
 			level = "TRACE"
 		}
-		config.Log.Trace("type: %v, start: %v, limit: %v, level: %v, id: %v, tag: %v", kind, start, limit, level, host, tag)
+		config.Log.Trace("type: %v, start: %v, end: %v, limit: %v, level: %v, id: %v, tag: %v", kind, start, end, limit, level, host, tag)
 		logLevel := lumber.LvlInt(level)
 		realOffset, err := strconv.ParseInt(start, 0, 64)
 		if err != nil {
 			res.WriteHeader(500)
 			res.Write([]byte("bad start offset"))
+			return
+		}
+		realEnd, err := strconv.ParseInt(end, 0, 64)
+		if err != nil {
+			res.WriteHeader(500)
+			res.Write([]byte("bad end value"))
 			return
 		}
 		realLimit, err := strconv.Atoi(limit)
@@ -135,7 +145,7 @@ func GenerateArchiveEndpoint(archive drain.ArchiverDrain) http.HandlerFunc {
 			res.Write([]byte("bad limit"))
 			return
 		}
-		slices, err := archive.Slice(kind, host, tag, realOffset, int64(realLimit), logLevel)
+		slices, err := archive.Slice(kind, host, tag, realOffset, realEnd, int64(realLimit), logLevel)
 		if err != nil {
 			res.WriteHeader(500)
 			res.Write([]byte(err.Error()))

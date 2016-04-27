@@ -9,20 +9,21 @@ Simple, lightweight, api-driven log aggregation service with realtime push capab
 
 | Route | Description | Payload | Output |
 | --- | --- | --- | --- |
-| **Get** /remove-token | Remove a log read/write token | *'X-AUTH-TOKEN' and 'X-ADMIN-TOKEN' headers  | success message string |
-| **Get** /add-token | Add a log read/write token | *'X-AUTH-TOKEN' and 'X-ADMIN-TOKEN' headers  | success message string |
-| **Post** / | Post a log | *'X-AUTH-TOKEN' header and json Log object | success message string |
-| **Get** / | List all services | *'X-AUTH-TOKEN' header | json array of Log objects |
+| **Get** /remove-token | Remove a log read/write token | *'X-USER-TOKEN' and 'X-AUTH-TOKEN' headers  | success message string |
+| **Get** /add-token | Add a log read/write token | *'X-USER-TOKEN' and 'X-AUTH-TOKEN' headers  | success message string |
+| **Post** / | Post a log | *'X-USER-TOKEN' header and json Log object | success message string |
+| **Get** / | List all services | *'X-USER-TOKEN' header | json array of Log objects |
 Note: * = only if 'auth-address' configured
 
 ### Query Parameters:
 | Parameter | Description |
 | --- | --- |
-| **auth** | Replacement for 'X-AUTH-TOKEN' |
+| **auth** | Replacement for 'X-USER-TOKEN' |
 | **id** | Filter by id |
 | **tag** | Filter by tag |
 | **type** | Filter by type |
-| **start** | Start time (unix epoch(nanoseconds)) at which to view logs (defaults to 0) |
+| **start** | Start time (unix epoch(nanoseconds)) at which to view logs older than (defaults to now) |
+| **end** | End time (unix epoch(nanoseconds)) at which to view logs newer than (defaults to 0) |
 | **limit** | Number of logs to read (defaults to 100) |
 | **level** | Severity of logs to view (defaults to 'trace') |
 `?id=my-app&tag=apache%5Berror%5D&type=deploy&start=0&limit=5`
@@ -53,13 +54,13 @@ Note: * = required on submit
 
 add auth key - attempt
 ```
-$ curl -ik https://localhost:1234/add-key -H 'X-AUTH-TOKEN: user'
+$ curl -ik https://localhost:1234/add-key -H 'X-USER-TOKEN: user'
 HTTP/1.1 401 Unauthorized
 ```
 
 add auth key - success
 ```
-$ curl -ik https://localhost:1234/add-key -H 'X-AUTH-TOKEN: user' -H 'X-ADMIN-TOKEN: secret'
+$ curl -ik https://localhost:1234/add-key -H 'X-USER-TOKEN: user' -H 'X-AUTH-TOKEN: secret'
 HTTP/1.1 200 OK
 ```
 
@@ -71,20 +72,20 @@ HTTP/1.1 401 Unauthorized
 
 publish log - success
 ```
-$ curl -ik https://localhost:1234 -H 'X-AUTH-TOKEN: user' -d '{"id":"my-app","type":"deploy","message":"$ mv nanobox/.htaccess .htaccess\n[✓] SUCCESS"}'
+$ curl -ik https://localhost:1234 -H 'X-USER-TOKEN: user' -d '{"id":"my-app","type":"deploy","message":"$ mv nanobox/.htaccess .htaccess\n[✓] SUCCESS"}'
 sucess!
 HTTP/1.1 200 OK
 ```
 
 get deploy logs
 ```
-$ curl -k https://localhost:1234?kind=deploy -H 'X-AUTH-TOKEN: user'
+$ curl -k https://localhost:1234?kind=deploy -H 'X-USER-TOKEN: user'
 [{"time":"2016-03-07T15:48:57.668893791-07:00","id":"my-app","tag":"","type":"deploy","priority":0,"message":"$ mv nanobox/.htaccess .htaccess\n[✓] SUCCESS"}]
 ```
 
 get app logs
 ```
-$ curl -k https://localhost:1234 -H 'X-AUTH-TOKEN: user'
+$ curl -k https://localhost:1234 -H 'X-USER-TOKEN: user'
 []
 ```
 

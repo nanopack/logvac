@@ -7,7 +7,7 @@ import (
 )
 
 func addKey(rw http.ResponseWriter, req *http.Request) {
-	err := authenticator.Add(req.Header.Get("X-AUTH-TOKEN"))
+	err := authenticator.Add(req.Header.Get("X-USER-TOKEN"))
 	if err != nil {
 		rw.WriteHeader(500)
 		rw.Write([]byte(err.Error()))
@@ -17,7 +17,7 @@ func addKey(rw http.ResponseWriter, req *http.Request) {
 }
 
 func removeKey(rw http.ResponseWriter, req *http.Request) {
-	err := authenticator.Remove(req.Header.Get("X-AUTH-TOKEN"))
+	err := authenticator.Remove(req.Header.Get("X-USER-TOKEN"))
 	if err != nil {
 		rw.WriteHeader(500)
 		rw.Write([]byte(err.Error()))
