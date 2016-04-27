@@ -113,6 +113,10 @@ func GenerateArchiveEndpoint(archive drain.ArchiverDrain) http.HandlerFunc {
 		if start == "" {
 			start = "0"
 		}
+		end := query.Get("end")
+		if end == "" {
+			end = "0"
+		}
 		limit := query.Get("limit")
 		if limit == "" {
 			limit = "100"
@@ -121,12 +125,18 @@ func GenerateArchiveEndpoint(archive drain.ArchiverDrain) http.HandlerFunc {
 		if level == "" {
 			level = "TRACE"
 		}
-		config.Log.Trace("type: %v, start: %v, limit: %v, level: %v, id: %v, tag: %v", kind, start, limit, level, host, tag)
+		config.Log.Trace("type: %v, start: %v, end: %v, limit: %v, level: %v, id: %v, tag: %v", kind, start, end, limit, level, host, tag)
 		logLevel := lumber.LvlInt(level)
 		realOffset, err := strconv.ParseInt(start, 0, 64)
 		if err != nil {
 			res.WriteHeader(500)
 			res.Write([]byte("bad start offset"))
+			return
+		}
+		realEnd, err := strconv.ParseInt(end, 0, 64)
+		if err != nil {
+			res.WriteHeader(500)
+			res.Write([]byte("bad end value"))
 			return
 		}
 		realLimit, err := strconv.Atoi(limit)
@@ -135,7 +145,7 @@ func GenerateArchiveEndpoint(archive drain.ArchiverDrain) http.HandlerFunc {
 			res.Write([]byte("bad limit"))
 			return
 		}
-		slices, err := archive.Slice(kind, host, tag, realOffset, int64(realLimit), logLevel)
+		slices, err := archive.Slice(kind, host, tag, realOffset, realEnd, int64(realLimit), logLevel)
 		if err != nil {
 			res.WriteHeader(500)
 			res.Write([]byte(err.Error()))

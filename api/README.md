@@ -22,7 +22,8 @@ Note: * = only if 'auth-address' configured
 | **id** | Filter by id |
 | **tag** | Filter by tag |
 | **type** | Filter by type |
-| **start** | Start time (unix epoch(nanoseconds)) at which to view logs (defaults to 0) |
+| **start** | Start time (unix epoch(nanoseconds)) at which to view logs older than (defaults to now) |
+| **end** | End time (unix epoch(nanoseconds)) at which to view logs newer than (defaults to 0) |
 | **limit** | Number of logs to read (defaults to 100) |
 | **level** | Severity of logs to view (defaults to 'trace') |
 `?id=my-app&tag=apache%5Berror%5D&type=deploy&start=0&limit=5`
