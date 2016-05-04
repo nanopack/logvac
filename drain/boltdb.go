@@ -73,7 +73,7 @@ func (a BoltArchive) Slice(name, host, tag string, offset, end, limit int64, lev
 			return nil
 		}
 
-		// skip to the correct id
+		// prepare to skip to the correct id
 		initial := &bytes.Buffer{}
 		if offset == 0 {
 			// if no offset value is given, start with last log
@@ -85,14 +85,24 @@ func (a BoltArchive) Slice(name, host, tag string, offset, end, limit int64, lev
 			}
 		}
 
-		// end at the specified time (pagination limits still apply)
+		// prepare to end at the specified time (pagination limits still apply)
 		final := &bytes.Buffer{}
 		if err := binary.Write(final, binary.BigEndian, end); err != nil {
 			return err
 		}
 
+		// seek boltdb cursor to initial offset
+		k, v := c.Seek(initial.Bytes())
+
+		// if the record's utime (k) doesn't match the specified "initial" value, use previous record.
+		// note: https://github.com/boltdb/bolt/blob/v1.2.0/cursor.go#L114 explains why.
+		// (this step may not be needed if the order of logs returned is reversed)
+		if string(k) != initial.String() {
+			k, v = c.Prev()
+		}
+
 		// todo: make limit be len(bucket)? if limit < 0
-		for k, v := c.Seek(initial.Bytes()); k != nil && limit > 0; k, v = c.Prev() {
+		for ; k != nil && limit > 0; k, v = c.Prev() {
 			msg := logvac.Message{}
 			if err := json.Unmarshal(v, &msg); err != nil {
 				return fmt.Errorf("Couldn't unmarshal message - %v", err)

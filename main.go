@@ -68,7 +68,6 @@ func main() {
 	Logvac.Execute()
 }
 
-// func serverStart() {
 func startLogvac(ccmd *cobra.Command, args []string) {
 	if err := config.ReadConfigFile(configFile); err != nil {
 		config.Log.Fatal("Failed to read config - %v", err)
