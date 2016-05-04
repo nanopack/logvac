@@ -5,23 +5,34 @@
 
 Simple, lightweight, api-driven log aggregation service with realtime push capabilities and historical persistence.
 
-## Status
-
-Experimental
-
 ## Quickstart
+
 ```sh
 # start server with defaults
 logvac -s
+
 # add auth token (using default 'auth-address')
-logvac add-token -t user
+logvac add-token -t TOKEN
+
 # add a log via http
-curl -k https://127.0.0.1:1234 -H "X-USER-TOKEN: user" \
-     -d '{"id":"log-test","type":"test","message":"my first log"}'
+curl -k https://127.0.0.1:1234 -H "X-USER-TOKEN: TOKEN" \
+     -d '{"id":"log-test", "type":"log", "message":"my first log"}'
+
 # view log via http
-curl -k "https://127.0.0.1:1234?type=test&auth=user"
+curl -k "https://127.0.0.1:1234?type=log&auth=TOKEN"
+
 # Congratulations logmaster!
 ```
+
+#### Gotchas
+- If you're seeing the following error, run logvac with admin or sudo privileges:
+`FATAL Authenticator failed to initialize - open /var/db/log-auth.bolt: permission denied`
+
+- If logvac doesn't seem to be doing anything (adding/fecthing logs), there is a chance you've started the server with authentication (the default) but have forgotten to add a token:
+`logvac add-token -t TOKEN`
+
+- If your logs aren't showing up where you think they should, try checking the 'app' type and see if they are there. By default logvac will log to `type=app` (unless changed via config options). If you have a malformed entry (even with a type specified) it will end up there:
+`curl -k "https://127.0.0.1:1234?type=app&auth=TOKEN"`
 
 ## Usage
 ```
