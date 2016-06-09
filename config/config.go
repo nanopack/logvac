@@ -30,6 +30,7 @@ var (
 	Log      lumber.Logger
 	Insecure = false
 	Server   = false
+	Version  = false
 )
 
 func AddFlags(cmd *cobra.Command) {
@@ -53,6 +54,7 @@ func AddFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVarP(&Token, "token", "T", Token, "Administrative token to add/remove `X-USER-TOKEN`s used to pub/sub via http ")
 	cmd.Flags().BoolVarP(&Server, "server", "s", Server, "Run as server")
 	cmd.Flags().BoolVarP(&Insecure, "insecure", "i", Insecure, "Don't use TLS (used for testing)")
+	cmd.Flags().BoolVarP(&Version, "version", "v", Version, "Print version info and exit")
 
 	Log = lumber.NewConsoleLogger(lumber.LvlInt("ERROR"))
 }

@@ -88,14 +88,14 @@ func TestUdp(t *testing.T) {
 		t.FailNow()
 	}
 	// pause for travis
-	time.Sleep(500 * time.Millisecond)
+	time.Sleep(time.Second)
 	_, err = client.Write([]byte("<83>Mar 11 14:13:12 web2 apache[error] ello, your app is broke"))
 	if err != nil {
 		t.Error(err)
 		t.FailNow()
 	}
 	// pause for travis
-	time.Sleep(500 * time.Millisecond)
+	time.Sleep(time.Second)
 }
 
 // test pushing a log via tcp
@@ -119,7 +119,7 @@ func TestTcp(t *testing.T) {
 		t.FailNow()
 	}
 	// boltdb seems to take some time committing the record (probably the speed/immediate commit tradeoff)
-	time.Sleep(500 * time.Millisecond)
+	time.Sleep(time.Second)
 }
 
 // test get logs

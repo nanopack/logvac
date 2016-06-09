@@ -3,6 +3,7 @@ package main
 import (
 	"io"
 	"os"
+	"fmt"
 	"syscall"
 
 	"github.com/jcelliott/lumber"
@@ -49,9 +50,17 @@ var (
 		Use:   "logvac",
 		Short: "logvac logging server",
 		Long:  ``,
-
-		Run: startLogvac,
+		PersistentPreRunE: readConfig,
+		PreRunE:           preFlight,
+		RunE:              startLogvac,
+		SilenceErrors:     true,
+		SilenceUsage:      true,
 	}
+
+	// version information (populated by go linker)
+	// -ldflags="-X main.tag=${tag} -X main.commit=${commit}"
+	tag    string
+	commit string
 )
 
 func main() {
@@ -68,16 +77,29 @@ func main() {
 	Logvac.Execute()
 }
 
-func startLogvac(ccmd *cobra.Command, args []string) {
+func readConfig(ccmd *cobra.Command, args []string) error {
 	if err := config.ReadConfigFile(configFile); err != nil {
-		config.Log.Fatal("Failed to read config - %v", err)
-		os.Exit(1)
+		fmt.Printf("Error: %v\n", err)
+		return err
+	}
+	return nil
+}
+
+func preFlight(ccmd *cobra.Command, args []string) error {
+	if config.Version {
+		fmt.Printf("logvac %s (%s)\n", tag, commit)
+		return fmt.Errorf("")
 	}
 
 	if !config.Server {
 		ccmd.HelpFunc()(ccmd, args)
-		return
+		return fmt.Errorf("")
 	}
+	return nil
+}
+
+
+func startLogvac(ccmd *cobra.Command, args []string) error {
 	// initialize logger
 	config.Log = lumber.NewConsoleLogger(lumber.LvlInt(config.LogLevel))
 
@@ -88,28 +110,30 @@ func startLogvac(ccmd *cobra.Command, args []string) {
 	err := authenticator.Init()
 	if err != nil {
 		config.Log.Fatal("Authenticator failed to initialize - %v", err)
-		os.Exit(1)
+		return err
 	}
 
 	// initialize drains
 	err = drain.Init()
 	if err != nil {
 		config.Log.Fatal("Drain failed to initialize - %v", err)
-		os.Exit(1)
+		return err
 	}
 
 	// initializes collectors
 	err = collector.Init()
 	if err != nil {
 		config.Log.Fatal("Collector failed to initialize - %v", err)
-		os.Exit(1)
+		return err
 	}
 
 	err = api.Start(collector.CollectHandler)
 	if err != nil {
 		config.Log.Fatal("Api failed to initialize - %v", err)
-		os.Exit(1)
+		return err
 	}
+
+	return nil
 }
 
 func exportLogvac(ccmd *cobra.Command, args []string) {
