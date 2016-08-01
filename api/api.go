@@ -29,18 +29,20 @@ func Start(collector http.HandlerFunc) error {
 	router.Post("/", verify(handleRequest(collector)))
 	router.Get("/", verify(handleRequest(retriever)))
 
-	// blocking...
-	if config.Insecure {
-		config.Log.Info("Api Listening on http://%s...", config.ListenHttp)
-		return http.ListenAndServe(config.ListenHttp, router)
-	}
-	config.Log.Info("Api Listening on https://%s...", config.ListenHttp)
 	cert, _ := nanoauth.Generate("nanobox.io")
 	auth := nanoauth.Auth{
 		Header:      "X-AUTH-TOKEN",
 		Certificate: cert,
 	}
-	return auth.ListenAndServeTLS(config.ListenHttp, config.Token, router, "/")
+
+	// blocking...
+	if config.Insecure {
+		config.Log.Info("Api Listening on http://%s...", config.ListenHttp)
+		return auth.ListenAndServe(config.ListenHttp, config.Token, router)
+	}
+
+	config.Log.Info("Api Listening on https://%s...", config.ListenHttp)
+	return auth.ListenAndServeTLS(config.ListenHttp, config.Token, router)
 }
 
 func cors(rw http.ResponseWriter, req *http.Request) {

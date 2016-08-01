@@ -2,6 +2,7 @@ package drain
 
 import (
 	"encoding/json"
+	"fmt"
 
 	mistCore "github.com/nanopack/mist/clients"
 
@@ -13,7 +14,8 @@ type pthinger interface {
 	Publish(tags []string, data string) error
 }
 type Mist struct {
-	mist pthinger // mistCore.tcpClient
+	address string   // address for redialing
+	mist    pthinger // mistCore.tcpClient
 }
 
 func NewMistClient(address string) (*Mist, error) {
@@ -23,7 +25,8 @@ func NewMistClient(address string) (*Mist, error) {
 	}
 
 	m := Mist{
-		mist: c,
+		address: address,
+		mist:    c,
 	}
 
 	return &m, nil
@@ -58,5 +61,24 @@ cleanTags:
 		return
 	}
 	config.Log.Trace("Mist publisher publishing...")
-	m.mist.Publish(tags, string(data))
+	// todo: still possible to lose a message (until connection dies)
+	err = m.mist.Publish(tags, string(data))
+	if err != nil {
+		// re-establish connection and publish
+		err2 := m.retryPublish(tags, string(data))
+		if err2 != nil {
+			config.Log.Error("Failed to Publish - %v - %v", err, err2)
+		}
+	}
+}
+
+func (m *Mist) retryPublish(tags []string, data string) error {
+	c, err := mistCore.New(m.address, config.PubAuth)
+	if err != nil {
+		return fmt.Errorf("Failed to redial mist - %v", err)
+	}
+
+	m.mist = c
+
+	return m.mist.Publish(tags, data)
 }
