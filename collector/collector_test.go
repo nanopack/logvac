@@ -31,6 +31,7 @@ func TestMain(m *testing.M) {
 	initialize()
 
 	// start api
+	config.Token = ""
 	go api.Start(collector.CollectHandler)
 	<-time.After(1 * time.Second)
 	rtn := m.Run()

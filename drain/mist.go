@@ -12,6 +12,7 @@ import (
 
 type pthinger interface {
 	Publish(tags []string, data string) error
+	Close()
 }
 type Mist struct {
 	address string   // address for redialing
@@ -81,4 +82,9 @@ func (m *Mist) retryPublish(tags []string, data string) error {
 	m.mist = c
 
 	return m.mist.Publish(tags, data)
+}
+
+// Close cleanly closes the mist client
+func (m *Mist) Close() {
+	m.mist.Close()
 }

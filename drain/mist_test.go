@@ -1,18 +1,13 @@
 package drain_test
 
 import (
-	"bufio"
-	"encoding/json"
 	"fmt"
-	"io"
-	"net"
 	"os"
-	"strings"
 	"testing"
 	"time"
 
 	"github.com/jcelliott/lumber"
-	"github.com/nanopack/mist/core"
+	"github.com/nanopack/mist/server"
 
 	"github.com/nanopack/logvac/config"
 	"github.com/nanopack/logvac/core"
@@ -27,6 +22,7 @@ var (
 
 // Test writing and getting data
 func TestPublish(t *testing.T) {
+	lumber.Level(lumber.LvlInt("fatal"))
 	err := mistInitialize()
 	if err != nil {
 		fmt.Println(err)
@@ -56,47 +52,8 @@ func TestPublish(t *testing.T) {
 	}
 
 	// write test messages
-	drain.Publisher.(*drain.Mist).Publish(messages[0])
-	drain.Publisher.(*drain.Mist).Publish(messages[1])
-
-	// get "handled" message from fake mist
-	msg := <-line
-	mistMsg := &mist.Message{}
-	err = json.Unmarshal([]byte(msg), &mistMsg)
-	if err != nil {
-		t.Error(fmt.Errorf("Failed to unmarshal - %v", err))
-		t.FailNow()
-	}
-
-	weMsg := &logvac.Message{}
-	err = json.Unmarshal([]byte(mistMsg.Data), &weMsg)
-	if err != nil {
-		t.Error(fmt.Errorf("Failed to unmarshal - %v", err))
-		t.FailNow()
-	}
-
-	if weMsg.Content != messages[0].Content {
-		t.Errorf("%q doesn't match expected out", weMsg)
-		t.FailNow()
-	}
-
-	// get second "handled" message from fake mist
-	msg = <-line
-	err = json.Unmarshal([]byte(msg), &mistMsg)
-	if err != nil {
-		t.Error(fmt.Errorf("Failed to unmarshal - %v", err))
-		t.FailNow()
-	}
-
-	err = json.Unmarshal([]byte(mistMsg.Data), &weMsg)
-	if err != nil {
-		t.Error(fmt.Errorf("Failed to unmarshal - %v", err))
-		t.FailNow()
-	}
-	if weMsg.Content != messages[1].Content {
-		t.Errorf("%q doesn't match expected out", weMsg)
-		t.FailNow()
-	}
+	drain.Publisher.Publish(messages[0])
+	drain.Publisher.Publish(messages[1])
 }
 
 // manually configure and start internals
@@ -108,10 +65,7 @@ func mistInitialize() error {
 	config.Log = lumber.NewConsoleLogger(lumber.LvlInt("ERROR"))
 	config.DbAddress = "boltdb:///tmp/boltdbTest/logvac.bolt"
 
-	err = fakeMistStart()
-	if err != nil {
-		return err
-	}
+	server.StartTCP(PubAddress, nil)
 
 	// initialize logvac
 	logvac.Init()
@@ -122,51 +76,15 @@ func mistInitialize() error {
 	drain.Init()
 	drain.Archiver.(*drain.BoltArchive).Close()
 
+	// Doing schemeless publisher
 	config.PubAddress = "127.0.0.1:2445"
 	drain.Init()
 	drain.Archiver.(*drain.BoltArchive).Close()
+	drain.Publisher.(*drain.Mist).Close()
 
 	// Doing real publisher
 	config.PubAddress = "mist://127.0.0.1:2445"
 	err = drain.Init()
+
 	return err
-}
-
-func fakeMistStart() error {
-	line = make(chan string)
-	stop = make(chan bool)
-
-	serverSocket, err := net.Listen("tcp", PubAddress)
-	if err != nil {
-		return err
-	}
-
-	// listen and handle
-	go func() {
-		for {
-			select {
-			default:
-				conn, err := serverSocket.Accept()
-				if err != nil {
-					return
-				}
-				// handleConnection
-				go func(c net.Conn) {
-					r := bufio.NewReader(c)
-					for {
-						words, err := r.ReadString('\n')
-						if err != nil && err != io.EOF {
-							return
-						}
-
-						line <- strings.TrimSuffix(words, "\n")
-					}
-				}(conn)
-			case <-stop:
-				return
-			}
-		}
-	}()
-
-	return nil
 }
