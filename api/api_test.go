@@ -36,9 +36,11 @@ func TestMain(m *testing.M) {
 	initialize()
 
 	// start insecure api
+	config.Token = ""
 	go api.Start(collector.CollectHandler)
 	time.Sleep(time.Second)
 	// start secure api
+	config.Token = "secret"
 	config.Insecure = false
 	config.ListenHttp = secureHttp
 	go api.Start(collector.CollectHandler)

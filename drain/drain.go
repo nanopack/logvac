@@ -101,6 +101,11 @@ func publishInit() error {
 		if err != nil {
 			return err
 		}
+	case "": // url.Parse requires scheme
+		Publisher, err = NewMistClient(config.PubAddress)
+		if err != nil {
+			return err
+		}
 	default:
 		Publisher, err = NewMistClient(u.Host)
 		if err != nil {

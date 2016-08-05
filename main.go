@@ -1,9 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"io"
 	"os"
-	"fmt"
 	"syscall"
 
 	"github.com/jcelliott/lumber"
@@ -47,9 +47,9 @@ var (
 	}
 
 	Logvac = &cobra.Command{
-		Use:   "logvac",
-		Short: "logvac logging server",
-		Long:  ``,
+		Use:               "logvac",
+		Short:             "logvac logging server",
+		Long:              ``,
 		PersistentPreRunE: readConfig,
 		PreRunE:           preFlight,
 		RunE:              startLogvac,
@@ -98,9 +98,9 @@ func preFlight(ccmd *cobra.Command, args []string) error {
 	return nil
 }
 
-
 func startLogvac(ccmd *cobra.Command, args []string) error {
 	// initialize logger
+	lumber.Level(lumber.LvlInt(config.LogLevel)) // for clients using lumber too
 	config.Log = lumber.NewConsoleLogger(lumber.LvlInt(config.LogLevel))
 
 	// initialize logvac
