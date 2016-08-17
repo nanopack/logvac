@@ -44,7 +44,7 @@ func TestMain(m *testing.M) {
 
 // test post logs
 func TestPostLogs(t *testing.T) {
-	body, err := rest("POST", "/", "{\"id\":\"log-test\",\"type\":\"app\",\"message\":\"test log\"}")
+	body, err := rest("POST", "/logs", "{\"id\":\"log-test\",\"type\":\"app\",\"message\":\"test log\"}")
 	if err != nil {
 		t.Error(err)
 		t.FailNow()
@@ -55,7 +55,7 @@ func TestPostLogs(t *testing.T) {
 	}
 	// pause for travis
 	time.Sleep(500 * time.Millisecond)
-	body, err = rest("POST", "/", "another test log")
+	body, err = rest("POST", "/logs", "another test log")
 	if err != nil {
 		t.Error(err)
 		t.FailNow()
@@ -125,7 +125,7 @@ func TestTcp(t *testing.T) {
 
 // test get logs
 func TestGetLogs(t *testing.T) {
-	body, err := rest("GET", "/?type=app", "")
+	body, err := rest("GET", "/logs?type=app", "")
 	if err != nil {
 		t.Error(err)
 		t.FailNow()

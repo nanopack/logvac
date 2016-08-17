@@ -82,7 +82,7 @@ func TestAddToken(t *testing.T) {
 // test post logs
 func TestPostLogs(t *testing.T) {
 	// secure
-	body, err := rest("POST", "/", "{\"id\":\"log-test\",\"type\":\"app\",\"message\":\"test log\"}")
+	body, err := rest("POST", "/logs", "{\"id\":\"log-test\",\"type\":\"app\",\"message\":\"test log\"}")
 	if err != nil {
 		t.Error(err)
 		t.FailNow()
@@ -92,7 +92,7 @@ func TestPostLogs(t *testing.T) {
 		t.FailNow()
 	}
 	// insecure
-	body, err = irest("POST", "/", "{\"id\":\"log-test\",\"type\":\"app\",\"message\":\"test log\"}")
+	body, err = irest("POST", "/logs", "{\"id\":\"log-test\",\"type\":\"app\",\"message\":\"test log\"}")
 	if err != nil {
 		t.Error(err)
 		t.FailNow()
@@ -107,7 +107,7 @@ func TestPostLogs(t *testing.T) {
 
 // test get logs
 func TestGetLogs(t *testing.T) {
-	body, err := irest("GET", "/?type=app&id=log-test&start=0&limit=1", "")
+	body, err := irest("GET", "/logs?type=app&id=log-test&start=0&limit=1", "")
 	if err != nil {
 		t.Error(err)
 		t.FailNow()
@@ -121,22 +121,22 @@ func TestGetLogs(t *testing.T) {
 	if len(msg) != 1 || msg[0].Content != "test log" {
 		t.Errorf("%q doesn't match expected out", body)
 	}
-	_, err = irest("GET", "/", "")
+	_, err = irest("GET", "/logs", "")
 	if err != nil {
 		t.Error(err)
 		t.FailNow()
 	}
-	_, err = irest("GET", "/?start=word", "")
+	_, err = irest("GET", "/logs?start=word", "")
 	if err == nil || strings.Contains(err.Error(), "bad start offset") {
 		t.Error("bad start is too forgiving")
 		t.FailNow()
 	}
-	_, err = irest("GET", "/?limit=word", "")
+	_, err = irest("GET", "/logs?limit=word", "")
 	if err == nil || strings.Contains(err.Error(), "bad limit") {
 		t.Error("bad limit is too forgiving")
 		t.FailNow()
 	}
-	_, err = irest("GET", "/?level=word", "")
+	_, err = irest("GET", "/logs?level=word", "")
 	if err != nil {
 		t.Error(err)
 		t.FailNow()
