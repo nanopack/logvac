@@ -70,6 +70,8 @@ func SyslogUDPStart(address string) error {
 	return nil
 }
 
+// SyslogTCPStart begins listening to the tcp port then parses and publishes
+// the message
 func SyslogTCPStart(address string) error {
 	serverSocket, err := net.Listen("tcp", address)
 	if err != nil {
@@ -139,10 +141,13 @@ func parseMessage(b []byte) (msg logvac.Message) {
 }
 
 // just a fake syslog parser
+
+// Parse is for fakeSyslog to match an interface
 func (fake *fakeSyslog) Parse() error {
 	return nil
 }
 
+// Dump is for accepting raw data over syslog
 func (fake *fakeSyslog) Dump() syslogparser.LogParts {
 	parsed := make(map[string]interface{}, 4)
 	parsed["hostname"] = ""
@@ -152,6 +157,7 @@ func (fake *fakeSyslog) Dump() syslogparser.LogParts {
 	return parsed
 }
 
+// Location is for fakeSyslog to match an interface
 func (fake *fakeSyslog) Location(loc *time.Location) {
 	return
 }

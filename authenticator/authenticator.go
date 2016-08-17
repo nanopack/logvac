@@ -1,5 +1,5 @@
-// authenticator handles the management of 'X-USER-TOKEN's, allowing an
-// authorized user to add, remove, and validate keys for http log collection.
+// Package authenticator handles the management of 'X-USER-TOKEN's, allowing an
+// authorized admin to add, remove, and validate keys for http log collection.
 package authenticator
 
 import (
@@ -11,6 +11,7 @@ import (
 )
 
 type (
+	// Authenticatable contains methods all authenticators should have
 	Authenticatable interface {
 		initialize() error
 		add(token string) error
@@ -26,6 +27,7 @@ var (
 	authenticator Authenticatable
 )
 
+// Init initializes the chosen authenticator
 func Init() error {
 	var err error
 	var u *url.URL
@@ -89,7 +91,7 @@ func Valid(token string) bool {
 	return authenticator.valid(token)
 }
 
-// Export exports auth tokens to a `logvac import`able file
+// ExportLogvac exports auth tokens to a `logvac import`able file
 func ExportLogvac(exportWriter io.Writer) error {
 	// func ExportLogvac() error {
 	if authenticator == nil {
@@ -99,7 +101,7 @@ func ExportLogvac(exportWriter io.Writer) error {
 	return authenticator.exportLogvac(exportWriter)
 }
 
-// Import imports auth tokens from a `logvac export`ed file
+// ImportLogvac imports auth tokens from a `logvac export`ed file
 func ImportLogvac(importReader io.Reader) error {
 	if authenticator == nil {
 		return nil

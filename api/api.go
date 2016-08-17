@@ -1,3 +1,19 @@
+// Package api handles the api routes and related funtionality.
+//
+// ADMIN ROUTES (requires X-AUTH-TOKEN)
+//
+// | Action | Route         | Description          | Payload                          | Output          |
+// |--------|---------------|----------------------|----------------------------------|-----------------|
+// | GET    | /add-token    | Adds a user token    | 'X-USER-TOKEN' Header with token | Success message |
+// | GET    | /remove-token | Removes a user token | 'X-USER-TOKEN' Header with token | Success message |
+//
+// USER ROUTES (requires X-USER-TOKEN)
+//
+// | Action | Route | Description       | Payload                          | Output          |
+// |--------|-------|-------------------|----------------------------------|-----------------|
+// | POST   | /logs | Publish a log     | 'X-USER-TOKEN' Header with token | Success message |
+// | GET    | /logs | Fetch stored logs | 'X-USER-TOKEN' Header with token | Success message |
+//
 package api
 
 import (
@@ -16,7 +32,7 @@ import (
 	"github.com/nanopack/logvac/drain"
 )
 
-// start the web server with the logvac functions
+// Start starts the web server with the logvac functions
 func Start(collector http.HandlerFunc) error {
 	retriever := GenerateArchiveEndpoint(drain.Archiver)
 
@@ -46,8 +62,7 @@ func Start(collector http.HandlerFunc) error {
 }
 
 func cors(rw http.ResponseWriter, req *http.Request) {
-	// todo: allow something more specific than "*"
-	rw.Header().Set("Access-Control-Allow-Origin", "*")
+	rw.Header().Set("Access-Control-Allow-Origin", config.CorsAllow)
 	rw.Header().Set("Access-Control-Allow-Methods", "GET, POST")
 	rw.Header().Set("Access-Control-Allow-Headers", "X-AUTH-TOKEN, X-USER-TOKEN")
 	rw.WriteHeader(200)
@@ -57,8 +72,7 @@ func cors(rw http.ResponseWriter, req *http.Request) {
 // handleRequest add a bit of logging
 func handleRequest(fn http.HandlerFunc) http.HandlerFunc {
 	return func(rw http.ResponseWriter, req *http.Request) {
-		// todo: allow something more specific than "*"
-		rw.Header().Set("Access-Control-Allow-Origin", "*")
+		rw.Header().Set("Access-Control-Allow-Origin", config.CorsAllow)
 		rw.Header().Set("Access-Control-Allow-Methods", "GET, POST")
 		rw.Header().Set("Access-Control-Allow-Headers", "X-AUTH-TOKEN, X-USER-TOKEN")
 
@@ -102,6 +116,7 @@ func verify(fn http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
+// GenerateArchiveEndpoint generates the endpoint for fetching filtered logs
 // note: javascript number precision may cause unexpected results (missing logs within 100 nanosecond window)
 func GenerateArchiveEndpoint(archive drain.ArchiverDrain) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {

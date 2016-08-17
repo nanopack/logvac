@@ -1,3 +1,5 @@
+// Package config is a central location for configuration options. It also contains
+// config file parsing logic.
 package config
 
 import (
@@ -10,29 +12,31 @@ import (
 
 var (
 	// collectors
-	ListenHttp = "127.0.0.1:1234"
-	ListenUdp  = "127.0.0.1:1234"
-	ListenTcp  = "127.0.0.1:1235"
+	ListenHttp = "127.0.0.1:1234" // address the api and http log collectors listen on
+	ListenUdp  = "127.0.0.1:1234" // address the udp log collector listens on
+	ListenTcp  = "127.0.0.1:1235" // address the tcp log collector listens on
 
 	// drains
-	PubAddress = "" // mist://127.0.0.1:1445
-	PubAuth    = ""
-	DbAddress  = "boltdb:///var/db/logvac.bolt"
+	PubAddress = ""                             // publisher address // mist://127.0.0.1:1445
+	PubAuth    = ""                             // publisher auth token
+	DbAddress  = "boltdb:///var/db/logvac.bolt" // database address
 
 	// authenticator
 	AuthAddress = "boltdb:///var/db/log-auth.bolt" // address or file location of auth backend ('boltdb:///var/db/logvac.bolt' or 'postgresql://127.0.0.1')
 
 	// other
-	LogKeep  = `{"app":"2w"}` // LogType and expire (X(m)in, (h)our,  (d)ay, (w)eek, (y)ear) (1, 10, 100 == keep up to that many) // todo: maybe map[string]interface
-	LogType  = "app"
-	LogLevel = "info"
-	Token    = "secret"
-	Log      lumber.Logger
-	Insecure = false
-	Server   = false
-	Version  = false
+	CorsAllow = "*"            // sets `Access-Control-Allow-Origin` header
+	LogKeep   = `{"app":"2w"}` // LogType and expire (X(m)in, (h)our,  (d)ay, (w)eek, (y)ear) (1, 10, 100 == keep up to that many) // todo: maybe map[string]interface
+	LogType   = "app"          // default incoming log type when not set
+	LogLevel  = "info"         // level which logvac will log at
+	Token     = "secret"       // token to connect to logvac's api
+	Log       lumber.Logger    // logger to write logs
+	Insecure  = false          // whether or not to start insecure
+	Server    = false          // whether or not to start logvac as a server
+	Version   = false          // whether or not to print version info and exit
 )
 
+// AddFlags adds cli flags to logvac
 func AddFlags(cmd *cobra.Command) {
 	// collectors
 	cmd.Flags().StringVarP(&ListenHttp, "listen-http", "a", ListenHttp, "API listen address (same endpoint for http log collection)")
@@ -48,10 +52,11 @@ func AddFlags(cmd *cobra.Command) {
 	cmd.PersistentFlags().StringVarP(&AuthAddress, "auth-address", "A", AuthAddress, "Address or file location of authentication db. ('boltdb:///var/db/logvac.bolt' or 'postgresql://127.0.0.1')")
 
 	// other
-	cmd.Flags().StringVarP(&LogKeep, "log-keep", "k", LogKeep, "Age or number of logs to keep per type `{\"app\":\"2w\", \"deploy\": 10}` (int or X(m)in, (h)our,  (d)ay, (w)eek, (y)ear)")
+	cmd.Flags().StringVarP(&CorsAllow, "cors-allow", "C", CorsAllow, "Sets the 'Access-Control-Allow-Origin' header")
+	cmd.Flags().StringVarP(&LogKeep, "log-keep", "k", LogKeep, "Age or number of logs to keep per type '{\"app\":\"2w\", \"deploy\": 10}' (int or X(m)in, (h)our,  (d)ay, (w)eek, (y)ear)")
 	cmd.Flags().StringVarP(&LogLevel, "log-level", "l", LogLevel, "Level at which to log")
 	cmd.Flags().StringVarP(&LogType, "log-type", "L", LogType, "Default type to apply to incoming logs (commonly used: app|deploy)")
-	cmd.Flags().StringVarP(&Token, "token", "T", Token, "Administrative token to add/remove `X-USER-TOKEN`s used to pub/sub via http ")
+	cmd.Flags().StringVarP(&Token, "token", "T", Token, "Administrative token to add/remove 'X-USER-TOKEN's used to pub/sub via http")
 	cmd.Flags().BoolVarP(&Server, "server", "s", Server, "Run as server")
 	cmd.Flags().BoolVarP(&Insecure, "insecure", "i", Insecure, "Don't use TLS (used for testing)")
 	cmd.Flags().BoolVarP(&Version, "version", "v", Version, "Print version info and exit")
@@ -59,6 +64,7 @@ func AddFlags(cmd *cobra.Command) {
 	Log = lumber.NewConsoleLogger(lumber.LvlInt("ERROR"))
 }
 
+// ReadConfigFile reads in the config file, if any
 func ReadConfigFile(configFile string) error {
 	if configFile == "" {
 		return nil
@@ -72,6 +78,7 @@ func ReadConfigFile(configFile string) error {
 	viper.SetDefault("pub-auth", PubAuth)
 	viper.SetDefault("db-address", DbAddress)
 	viper.SetDefault("auth-address", AuthAddress)
+	viper.SetDefault("cors-allow", CorsAllow)
 	viper.SetDefault("log-keep", LogKeep)
 	viper.SetDefault("log-level", LogLevel)
 	viper.SetDefault("log-type", LogType)
@@ -96,6 +103,7 @@ func ReadConfigFile(configFile string) error {
 	PubAuth = viper.GetString("pub-auth")
 	DbAddress = viper.GetString("db-address")
 	AuthAddress = viper.GetString("auth-address")
+	CorsAllow = viper.GetString("cors-allow")
 	LogKeep = viper.GetString("log-keep")
 	LogLevel = viper.GetString("log-level")
 	LogType = viper.GetString("log-type")
