@@ -120,8 +120,6 @@ See http examples [here](./api/README.md)
 
 ## Todo
 
-- Reconnect to publisher on disconnect
-- Return and print cli errors
 - Negate tag (msg.Tag != tag) in drain.Slice if tag[0] == "!"
 - Cleanup postgres authenticator db
 - Allow multiple filters (id=web.dashboard&id=data.redis)
