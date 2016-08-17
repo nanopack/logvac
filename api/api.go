@@ -26,8 +26,8 @@ func Start(collector http.HandlerFunc) error {
 	router.Get("/remove-token", handleRequest(removeKey))
 	router.Add("OPTIONS", "/", handleRequest(cors))
 
-	router.Post("/", verify(handleRequest(collector)))
-	router.Get("/", verify(handleRequest(retriever)))
+	router.Post("/logs", verify(handleRequest(collector)))
+	router.Get("/logs", verify(handleRequest(retriever)))
 
 	cert, _ := nanoauth.Generate("nanobox.io")
 	auth := nanoauth.Auth{
@@ -38,11 +38,11 @@ func Start(collector http.HandlerFunc) error {
 	// blocking...
 	if config.Insecure {
 		config.Log.Info("Api Listening on http://%s...", config.ListenHttp)
-		return auth.ListenAndServe(config.ListenHttp, config.Token, router)
+		return auth.ListenAndServe(config.ListenHttp, config.Token, router, "/logs")
 	}
 
 	config.Log.Info("Api Listening on https://%s...", config.ListenHttp)
-	return auth.ListenAndServeTLS(config.ListenHttp, config.Token, router)
+	return auth.ListenAndServeTLS(config.ListenHttp, config.Token, router, "/logs")
 }
 
 func cors(rw http.ResponseWriter, req *http.Request) {
@@ -89,7 +89,10 @@ func verify(fn http.HandlerFunc) http.HandlerFunc {
 		// allow browsers to authenticate/fetch logs
 		if key == "" {
 			query := req.URL.Query()
-			key = query.Get("auth")
+			key = query.Get("X-USER-TOKEN")
+			if key == "" {
+				key = query.Get("x-user-token")
+			}
 		}
 		if !authenticator.Valid(key) {
 			rw.WriteHeader(401)
