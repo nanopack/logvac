@@ -46,8 +46,12 @@ func SyslogUDPStart(address string) error {
 		return err
 	}
 	go func() {
-		var buf []byte = make([]byte, 1024)
 		for {
+			// if data is missing, a network protocol is being used that sends more
+			// data than 2048 bytes. For syslog and nc, this is sufficient.
+			var buf []byte = make([]byte, 2048)
+
+			// read 2048 bytes from the udp packet
 			n, remote, err := socket.ReadFromUDP(buf)
 			if err != nil {
 				return
@@ -55,8 +59,8 @@ func SyslogUDPStart(address string) error {
 			if remote != nil {
 				// if the number of bytes read is greater than 0
 				if n > 0 {
-					// handle parsing in another process so that this one can continue to receive
-					// UDP packets
+					// handle parsing in another process so that this one can continue to
+					// receive UDP packets
 					go func(buf []byte) {
 						msg := parseMessage(buf[0:n])
 						msg.Type = config.LogType
