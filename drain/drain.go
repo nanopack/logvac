@@ -1,3 +1,4 @@
+// Package drain handles the storing and publishing of logs.
 package drain
 
 import (
@@ -11,16 +12,19 @@ import (
 type (
 	// Archiver defines a storage type drain
 	ArchiverDrain interface {
+		// Init initializes the archiver drain
 		Init() error
 		// Slice returns a slice of logs based on the name, offset, limit, and log-level
 		Slice(name, host, tag string, offset, end, limit int64, level int) ([]logvac.Message, error)
 		// Write writes the message to database
 		Write(msg logvac.Message)
+		// Expire cleans up old logs
 		Expire()
 	}
 
 	// Publisher defines a pub-sub type drain
 	PublisherDrain interface {
+		// Init initializes the publish drain
 		Init() error
 		// Publish publishes the tagged data
 		Publish(msg logvac.Message)
@@ -28,10 +32,11 @@ type (
 )
 
 var (
-	Publisher PublisherDrain
-	Archiver  ArchiverDrain
+	Publisher PublisherDrain // default publish drain
+	Archiver  ArchiverDrain  // default archive drain
 )
 
+// Init initializes the archiver and publisher drains if configured
 func Init() error {
 	// initialize archiver
 	err := archiveInit()

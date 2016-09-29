@@ -17,9 +17,7 @@ import (
 	"github.com/nanopack/logvac/core"
 )
 
-type Http struct{}
-
-// create and return a http handler that can be dropped into an api.
+// GenerateHttpCollector creates and returns an http handler that can be dropped into the api.
 func GenerateHttpCollector() http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
 		body, err := ioutil.ReadAll(req.Body)

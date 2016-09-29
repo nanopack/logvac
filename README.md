@@ -1,5 +1,6 @@
 [![logvac logo](http://nano-assets.gopagoda.io/readme-headers/logvac.png)](http://nanobox.io/open-source#logvac)  
 [![Build Status](https://travis-ci.org/nanopack/logvac.svg)](https://travis-ci.org/nanopack/logvac)
+[![GoDoc](https://godoc.org/github.com/nanopack/logvac?status.svg)](https://godoc.org/github.com/nanopack/logvac)
 
 # Logvac
 
@@ -42,27 +43,29 @@ curl -k "https://127.0.0.1:1234?type=log&auth=TOKEN"
 
 Available Commands:
 ```
+  add-token   Add http publish/subscribe authentication token
   export      Export http publish/subscribe authentication tokens
   import      Import http publish/subscribe authentication tokens
-  add-token   Add http publish/subscribe authentication token
 ```
 
 Flags:
 ```
-  -A, --auth-address="boltdb:///var/db/log-auth.bolt": Address or file location of authentication db. (or 'postgresql://127.0.0.1')
-  -c, --config-file="": config file location for server
-  -d, --db-address="boltdb:///var/db/logvac.bolt": Log storage address
-  -i, --insecure[=false]: Don't use TLS (used for testing)
-  -a, --listen-http="127.0.0.1:1234": API listen address (same endpoint for http log collection)
-  -t, --listen-tcp="127.0.0.1:1235": TCP log collection endpoint
-  -u, --listen-udp="127.0.0.1:1234": UDP log collection endpoint
-  -k, --log-keep="{\"app\":\"2w\"}": Age or number of logs to keep per type `{"app":"2w", "deploy": 10}` (int or X(m)in, (h)our,  (d)ay, (w)eek, (y)ear)
-  -l, --log-level="info": Level at which to log
-  -L, --log-type="app": Default type to apply to incoming logs (commonly used: app|deploy)
-  -p, --pub-address="": Log publisher (mist) address ("mist://127.0.0.1:1445")
-  -P, --pub-auth="": Log publisher (mist) auth token
-  -s, --server[=false]: Run as server
-  -T, --token="secret": Administrative token to add/remove `X-USER-TOKEN`s used to pub/sub via http
+  -A, --auth-address string   Address or file location of authentication db. ('boltdb:///var/db/logvac.bolt' or 'postgresql://127.0.0.1') (default "boltdb:///var/db/log-auth.bolt")
+  -c, --config-file string    config file location for server
+  -C, --cors-allow string     Sets the 'Access-Control-Allow-Origin' header (default "*")
+  -d, --db-address string     Log storage address (default "boltdb:///var/db/logvac.bolt")
+  -i, --insecure              Don't use TLS (used for testing)
+  -a, --listen-http string    API listen address (same endpoint for http log collection) (default "127.0.0.1:1234")
+  -t, --listen-tcp string     TCP log collection endpoint (default "127.0.0.1:1235")
+  -u, --listen-udp string     UDP log collection endpoint (default "127.0.0.1:1234")
+  -k, --log-keep string       Age or number of logs to keep per type '{"app":"2w", "deploy": 10}'' (int or X(m)in, (h)our,  (d)ay, (w)eek, (y)ear) (default "{\"app\":\"2w\"}")
+  -l, --log-level string      Level at which to log (default "info")
+  -L, --log-type string       Default type to apply to incoming logs (commonly used: app|deploy) (default "app")
+  -p, --pub-address string    Log publisher (mist) address ("mist://127.0.0.1:1445")
+  -P, --pub-auth string       Log publisher (mist) auth token
+  -s, --server                Run as server
+  -T, --token string          Administrative token to add/remove 'X-USER-TOKEN's used to pub/sub via http (default "secret")
+  -v, --version               Print version info and exit
 ```
 
 Config File: (takes precedence over cli flags)
@@ -76,6 +79,7 @@ Config File: (takes precedence over cli flags)
   "pub-auth": "",
   "db-address": "boltdb:///var/db/logvac.bolt",
   "auth-address": "boltdb:///var/db/log-auth.bolt",
+  "cors-allow": "*",
   "log-keep": "{\"app\":\"2w\"}",
   "log-type": "app",
   "log-level": "info",
@@ -116,8 +120,9 @@ See http examples [here](./api/README.md)
 
 ## Todo
 
-- Improved documentation
-- Reconnect to publisher on disconnect
+- Negate tag (msg.Tag != tag) in drain.Slice if tag[0] == "!"
+- Cleanup postgres authenticator db
+- Allow multiple filters (id=web.dashboard&id=data.redis)
 
 ## Contributing
 

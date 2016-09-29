@@ -19,6 +19,7 @@ type (
 	}
 )
 
+// NewPgDb creates a new postgres authenticator
 func NewPgDb(addr string) (*postgresql, error) {
 	pg := postgresql{
 		address: addr,

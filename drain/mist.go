@@ -14,11 +14,14 @@ type pthinger interface {
 	Publish(tags []string, data string) error
 	Close()
 }
+
+// Mist is a mist publisher
 type Mist struct {
 	address string   // address for redialing
 	mist    pthinger // mistCore.tcpClient
 }
 
+// NewMistClient creates a new mist publisher
 func NewMistClient(address string) (*Mist, error) {
 	c, err := mistCore.New(address, config.PubAuth)
 	if err != nil {

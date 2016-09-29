@@ -1,3 +1,5 @@
+// Package logvac handles the adding, removing, and writing to drains. It also
+// defines the common types used accross logvac.
 package logvac
 
 import (
@@ -19,6 +21,7 @@ type (
 		Trace(string, ...interface{})
 	}
 
+	// Message defines the structure of a log message
 	Message struct {
 		Time     time.Time `json:"time"`
 		UTime    int64     `json:"utime"`
@@ -29,6 +32,7 @@ type (
 		Content  string    `json:"message"`
 	}
 
+	// Logvac defines the structure for the default logvac object
 	Logvac struct {
 		drains map[string]drainChannels
 	}
@@ -42,6 +46,7 @@ type (
 	}
 )
 
+// Vac is the default logvac object
 var Vac Logvac
 
 // Initializes a logvac object

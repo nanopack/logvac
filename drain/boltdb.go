@@ -18,16 +18,19 @@ import (
 )
 
 var (
-	CleanFreq = 60 // for testing
+	// How often to clean, exported for testing
+	CleanFreq = 60
 )
 
 type (
+	// BoltArchive is a boltDB archiver
 	BoltArchive struct {
 		db   *bolt.DB
 		Done chan bool
 	}
 )
 
+// NewBoltArchive creates a new boltDB archiver
 func NewBoltArchive(path string) (*BoltArchive, error) {
 	err := os.MkdirAll(filepath.Dir(path), 0755)
 	if err != nil {
@@ -46,6 +49,7 @@ func NewBoltArchive(path string) (*BoltArchive, error) {
 	return &archive, nil
 }
 
+// Init initializes the archiver drain
 func (a BoltArchive) Init() error {
 	// add drain
 	logvac.AddDrain("historical", a.Write)
@@ -53,10 +57,12 @@ func (a BoltArchive) Init() error {
 	return nil
 }
 
+// Close closes the bolt db
 func (a BoltArchive) Close() {
 	a.db.Close()
 }
 
+// Slice returns a slice of logs based on the name, offset, limit, and log-level
 func (a BoltArchive) Slice(name, host, tag string, offset, end, limit int64, level int) ([]logvac.Message, error) {
 	var messages []logvac.Message
 
@@ -113,6 +119,7 @@ func (a BoltArchive) Slice(name, host, tag string, offset, end, limit int64, lev
 			}
 			if msg.Priority >= level {
 				if msg.Id == host || host == "" {
+					// todo: negate here if tag[0] == "!"
 					if msg.Tag == tag || tag == "" {
 						limit--
 						// prepend messages with new message (display newest last)
@@ -132,6 +139,7 @@ func (a BoltArchive) Slice(name, host, tag string, offset, end, limit int64, lev
 	return messages, nil
 }
 
+// Write writes the message to database
 func (a BoltArchive) Write(msg logvac.Message) {
 	config.Log.Trace("Bolt archive writing...")
 	err := a.db.Batch(func(tx *bolt.Tx) error {
@@ -162,6 +170,7 @@ func (a BoltArchive) Write(msg logvac.Message) {
 	}
 }
 
+// Expire cleans up old logs
 func (a BoltArchive) Expire() {
 	// if log-keep is "" expire is disabled
 	if config.LogKeep == "" {

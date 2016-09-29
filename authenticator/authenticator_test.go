@@ -63,7 +63,7 @@ func TestAddToken(t *testing.T) {
 
 // test get logs // doesn't provide any "coverage" but ensures auth works
 func TestGetLogs(t *testing.T) {
-	body, err := rest("GET", "/?type=app", "")
+	body, err := rest("GET", "/logs?type=app", "")
 	if err != nil {
 		t.Error(err)
 		t.FailNow()
