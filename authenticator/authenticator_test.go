@@ -115,7 +115,7 @@ func rest(method, route, data string) ([]byte, error) {
 
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to %v %v - %v", method, route, err)
+		return nil, fmt.Errorf("Unable to %s %s - %s", method, route, err)
 	}
 	defer res.Body.Close()
 
@@ -144,34 +144,34 @@ func initialize() error {
 	config.AuthAddress = ""
 	err := authenticator.Init()
 	if err != nil {
-		return fmt.Errorf("Authenticator failed to initialize - %v", err)
+		return fmt.Errorf("Authenticator failed to initialize - %s", err)
 	}
 	config.AuthAddress = "file:///tmp/authTest/logvac-auth.bolt"
 	err = authenticator.Init()
 	if err != nil {
-		return fmt.Errorf("Authenticator failed to initialize - %v", err)
+		return fmt.Errorf("Authenticator failed to initialize - %s", err)
 	}
 	config.AuthAddress = "~!@#$%^&*()_"
 	err = authenticator.Init()
 	if err == nil {
-		return fmt.Errorf("Authenticator failed to initialize - %v", err)
+		return fmt.Errorf("Authenticator failed to initialize - %s", err)
 	}
 	config.AuthAddress = "boltdb:///tmp/authTest/logvac-auth.bolt"
 	err = authenticator.Init()
 	if err != nil {
-		return fmt.Errorf("Authenticator failed to initialize - %v", err)
+		return fmt.Errorf("Authenticator failed to initialize - %s", err)
 	}
 
 	// initialize drains
 	err = drain.Init()
 	if err != nil {
-		return fmt.Errorf("Drain failed to initialize - %v", err)
+		return fmt.Errorf("Drain failed to initialize - %s", err)
 	}
 
 	// initializes collectors
 	err = collector.Init()
 	if err != nil {
-		return fmt.Errorf("Collector failed to initialize - %v", err)
+		return fmt.Errorf("Collector failed to initialize - %s", err)
 	}
 
 	return nil

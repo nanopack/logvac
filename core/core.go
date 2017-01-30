@@ -116,7 +116,7 @@ func WriteMessage(msg Message) {
 }
 
 func (l *Logvac) writeMessage(msg Message) {
-	// config.Log.Trace("Writing message - %v...", msg)
+	// config.Log.Trace("Writing message - %s...", msg)
 	group := sync.WaitGroup{}
 	for _, drain := range l.drains {
 		group.Add(1)

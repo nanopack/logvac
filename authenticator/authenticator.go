@@ -33,7 +33,7 @@ func Init() error {
 	var u *url.URL
 	u, err = url.Parse(config.AuthAddress)
 	if err != nil {
-		return fmt.Errorf("Failed to parse db connection - %v", err)
+		return fmt.Errorf("Failed to parse db connection - %s", err)
 	}
 	switch u.Scheme {
 	case "boltdb":
@@ -69,7 +69,7 @@ func Add(token string) error {
 	if authenticator == nil {
 		return nil
 	}
-	config.Log.Trace("Adding token: %v...", token)
+	config.Log.Trace("Adding token: %s...", token)
 	return authenticator.add(token)
 }
 
@@ -78,7 +78,7 @@ func Remove(token string) error {
 	if authenticator == nil {
 		return nil
 	}
-	config.Log.Trace("Removing token: %v...", token)
+	config.Log.Trace("Removing token: %s...", token)
 	return authenticator.remove(token)
 }
 
@@ -87,7 +87,7 @@ func Valid(token string) bool {
 	if authenticator == nil {
 		return true
 	}
-	config.Log.Trace("Validating token: %v...", token)
+	config.Log.Trace("Validating token: %s...", token)
 	return authenticator.valid(token)
 }
 

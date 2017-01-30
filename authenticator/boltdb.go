@@ -160,7 +160,7 @@ func (b boltdb) exportLogvac(exportWriter io.Writer) error {
 	// write tokens
 	_, err = exportWriter.Write(tkns)
 	if err != nil {
-		return fmt.Errorf("Failed to write - %v", err)
+		return fmt.Errorf("Failed to write - %s", err)
 	}
 
 	return nil
@@ -175,14 +175,14 @@ func (b boltdb) importLogvac(importReader io.Reader) error {
 	tkns := make([]byte, 10240)
 	_, err := importReader.Read(tkns)
 	if err != nil {
-		return fmt.Errorf("Failed to read - %v", err)
+		return fmt.Errorf("Failed to read - %s", err)
 	}
 	// clean up 0 bytes
 	tkns = bytes.Trim(tkns, "\x00")
 
 	err = json.Unmarshal(tkns, &tokens)
 	if err != nil {
-		return fmt.Errorf("Failed to unmarshal - %v", err)
+		return fmt.Errorf("Failed to unmarshal - %s", err)
 	}
 
 	db, err := bolt.Open(b.dbAddr, 0600, nil)
@@ -196,12 +196,12 @@ func (b boltdb) importLogvac(importReader io.Reader) error {
 			bucket := tx.Bucket([]byte("tokens"))
 			err = bucket.Put([]byte(token), []byte(token))
 			if err != nil {
-				return fmt.Errorf("Failed to put token - %v", err)
+				return fmt.Errorf("Failed to put token - %s", err)
 			}
 			return nil
 		})
 		if err != nil {
-			return fmt.Errorf("Failed to update db - %v", err)
+			return fmt.Errorf("Failed to update db - %s", err)
 		}
 	}
 

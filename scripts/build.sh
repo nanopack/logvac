@@ -21,8 +21,9 @@ getCurrTag() {
 
 # build logvac
 echo "Building logvac..."
-gox -ldflags="-X main.tag=$(getCurrTag) -X main.commit=$(getCurrCommit)" \
-  -osarch "darwin/amd64 linux/amd64 windows/amd64" -output="./build/{{.OS}}/{{.Arch}}/logvac"
+gox -ldflags="-s -X main.tag=$(getCurrTag) -X main.commit=$(getCurrCommit)" \
+  -osarch "linux/amd64" -output="./build/{{.OS}}/{{.Arch}}/logvac"
+  # -osarch "darwin/amd64 linux/amd64 windows/amd64" -output="./build/{{.OS}}/{{.Arch}}/logvac"
 
 # look through each os/arch/file and generate an md5 for each
 echo "Generating md5s..."

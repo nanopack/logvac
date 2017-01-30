@@ -71,7 +71,7 @@ cleanTags:
 		// re-establish connection and publish
 		err2 := m.retryPublish(tags, string(data))
 		if err2 != nil {
-			config.Log.Error("Failed to Publish - %v - %v", err, err2)
+			config.Log.Error("Failed to Publish - %s - %s", err, err2)
 		}
 	}
 }
@@ -79,7 +79,7 @@ cleanTags:
 func (m *Mist) retryPublish(tags []string, data string) error {
 	c, err := mistCore.New(m.address, config.PubAuth)
 	if err != nil {
-		return fmt.Errorf("Failed to redial mist - %v", err)
+		return fmt.Errorf("Failed to redial mist - %s", err)
 	}
 
 	m.mist = c

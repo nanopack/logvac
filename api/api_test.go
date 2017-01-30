@@ -115,7 +115,7 @@ func TestGetLogs(t *testing.T) {
 	msg := []logvac.Message{}
 	err = json.Unmarshal(body, &msg)
 	if err != nil {
-		t.Error(fmt.Errorf("Failed to unmarshal - %v", err))
+		t.Error(fmt.Errorf("Failed to unmarshal - %s", err))
 		t.FailNow()
 	}
 	if len(msg) != 1 || msg[0].Content != "test log" {
@@ -164,7 +164,7 @@ func irest(method, route, data string) ([]byte, error) {
 
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to %v %v - %v", method, route, err)
+		return nil, fmt.Errorf("Unable to %s %s - %s", method, route, err)
 	}
 	defer res.Body.Close()
 
@@ -186,7 +186,7 @@ func rest(method, route, data string) ([]byte, error) {
 
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to %v %v - %v", method, route, err)
+		return nil, fmt.Errorf("Unable to %s %s - %s", method, route, err)
 	}
 	defer res.Body.Close()
 
@@ -218,21 +218,21 @@ func initialize() {
 	// setup authenticator
 	err := authenticator.Init()
 	if err != nil {
-		config.Log.Fatal("Authenticator failed to initialize - %v", err)
+		config.Log.Fatal("Authenticator failed to initialize - %s", err)
 		os.Exit(1)
 	}
 
 	// initialize drains
 	err = drain.Init()
 	if err != nil {
-		config.Log.Fatal("Drain failed to initialize - %v", err)
+		config.Log.Fatal("Drain failed to initialize - %s", err)
 		os.Exit(1)
 	}
 
 	// initializes collectors
 	err = collector.Init()
 	if err != nil {
-		config.Log.Fatal("Collector failed to initialize - %v", err)
+		config.Log.Fatal("Collector failed to initialize - %s", err)
 		os.Exit(1)
 	}
 }

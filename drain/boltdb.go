@@ -111,7 +111,7 @@ func (a BoltArchive) Slice(name, host, tag string, offset, end, limit int64, lev
 		for ; k != nil && limit > 0; k, v = c.Prev() {
 			msg := logvac.Message{}
 			if err := json.Unmarshal(v, &msg); err != nil {
-				return fmt.Errorf("Couldn't unmarshal message - %v", err)
+				return fmt.Errorf("Couldn't unmarshal message - %s", err)
 			}
 			// if specified end is reached, be done
 			if string(k) == final.String() {
@@ -135,7 +135,7 @@ func (a BoltArchive) Slice(name, host, tag string, offset, end, limit int64, lev
 		return nil, err
 	}
 
-	// config.Log.Trace("Messages: %v", messages)
+	// config.Log.Trace("Messages: %+q", messages)
 	return messages, nil
 }
 
@@ -166,7 +166,7 @@ func (a BoltArchive) Write(msg logvac.Message) {
 	})
 
 	if err != nil {
-		config.Log.Error("Historical write failed - %v", err.Error())
+		config.Log.Error("Historical write failed - %s", err)
 	}
 }
 
@@ -180,7 +180,7 @@ func (a BoltArchive) Expire() {
 	var logKeep map[string]interface{}
 	err := json.Unmarshal([]byte(config.LogKeep), &logKeep)
 	if err != nil {
-		config.Log.Fatal("Bad JSON syntax for log-keep - %v", err)
+		config.Log.Fatal("Bad JSON syntax for log-keep - %s", err)
 		os.Exit(1) // maybe not?
 	}
 
@@ -209,7 +209,7 @@ func (a BoltArchive) Expire() {
 					if len(match) == 3 {
 						number, err := strconv.ParseInt(match[1], 0, 64)
 						if err != nil {
-							config.Log.Fatal("Bad log-keep - %v", err)
+							config.Log.Fatal("Bad log-keep - %s", err)
 							number = 2
 						}
 						switch match[2] {
@@ -226,7 +226,7 @@ func (a BoltArchive) Expire() {
 						case "y": // year
 							duration = NANO_YEAR * number
 						default: // 2 weeks
-							config.Log.Debug("Keeping '%v' logs for 2 weeks", k)
+							config.Log.Debug("Keeping '%s' logs for 2 weeks", k)
 							duration = NANO_WEEK * 2
 						}
 					}
@@ -247,13 +247,13 @@ func (a BoltArchive) Expire() {
 							var logMessage logvac.Message
 							err := json.Unmarshal([]byte(vv), &logMessage)
 							if err != nil {
-								config.Log.Fatal("Bad JSON syntax in log message - %v", err)
+								config.Log.Fatal("Bad JSON syntax in log message - %s", err)
 							}
 							if logMessage.UTime < expireTime {
-								config.Log.Trace("Deleting expired log of type '%v'...", k)
+								config.Log.Trace("Deleting expired log of type '%s'...", k)
 								err = c.Delete()
 								if err != nil {
-									config.Log.Trace("Failed to delete expired log - %v", err)
+									config.Log.Trace("Failed to delete expired log - %s", err)
 								}
 							}
 						}
@@ -274,10 +274,10 @@ func (a BoltArchive) Expire() {
 
 						// loop through and remove extra logs
 						for key_count := float64(bucket.Stats().KeyN); key_count > v.(float64); key_count-- {
-							config.Log.Trace("Deleting extra log of type '%v'...", k)
+							config.Log.Trace("Deleting extra log of type '%s'...", k)
 							err = c.Delete()
 							if err != nil {
-								config.Log.Trace("Failed to delete extra log - %v", err)
+								config.Log.Trace("Failed to delete extra log - %s", err)
 							}
 							c.Next()
 						}

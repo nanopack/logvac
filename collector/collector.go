@@ -21,7 +21,7 @@ func Init() error {
 		if err != nil {
 			return err
 		}
-		config.Log.Info("Collector listening on tcp://%v...", config.ListenTcp)
+		config.Log.Info("Collector listening on tcp://%s...", config.ListenTcp)
 	}
 
 	if config.ListenUdp != "" {
@@ -29,12 +29,12 @@ func Init() error {
 		if err != nil {
 			return err
 		}
-		config.Log.Info("Collector listening on udp://%v...", config.ListenUdp)
+		config.Log.Info("Collector listening on udp://%s...", config.ListenUdp)
 	}
 
 	if config.ListenHttp != "" {
 		CollectHandler = GenerateHttpCollector()
-		config.Log.Info("Collector listening on http://%v...", config.ListenHttp)
+		config.Log.Info("Collector listening on http://%s...", config.ListenHttp)
 	}
 
 	return nil

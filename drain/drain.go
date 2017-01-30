@@ -41,7 +41,7 @@ func Init() error {
 	// initialize archiver
 	err := archiveInit()
 	if err != nil {
-		return fmt.Errorf("Failed to initialize archiver - %v", err)
+		return fmt.Errorf("Failed to initialize archiver - %s", err)
 	}
 	config.Log.Info("Archiving drain '%s' initialized", config.DbAddress)
 
@@ -49,7 +49,7 @@ func Init() error {
 	if config.PubAddress != "" {
 		err = publishInit()
 		if err != nil {
-			return fmt.Errorf("Failed to initialize publisher - %v", err)
+			return fmt.Errorf("Failed to initialize publisher - %s", err)
 		}
 		config.Log.Info("Publishing drain '%s' initialized", config.PubAddress)
 	}
@@ -60,7 +60,7 @@ func Init() error {
 func archiveInit() error {
 	u, err := url.Parse(config.DbAddress)
 	if err != nil {
-		return fmt.Errorf("Failed to parse db connection - %v", err)
+		return fmt.Errorf("Failed to parse db connection - %s", err)
 	}
 	switch u.Scheme {
 	case "boltdb":
@@ -98,7 +98,7 @@ func archiveInit() error {
 func publishInit() error {
 	u, err := url.Parse(config.PubAddress)
 	if err != nil {
-		return fmt.Errorf("Failed to parse publisher connection - %v", err)
+		return fmt.Errorf("Failed to parse publisher connection - %s", err)
 	}
 	switch u.Scheme {
 	case "mist":

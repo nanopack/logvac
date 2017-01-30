@@ -89,9 +89,9 @@ func handleRequest(fn http.HandlerFunc) http.HandlerFunc {
 			return r.FindStringSubmatch(fmt.Sprintf("%+v", trw))[1]
 		}
 
-		config.Log.Debug(`%v - [%v] %v %v %v(%s) - "User-Agent: %s"`,
+		config.Log.Debug(`%s - [%s] %s %s %s(%s) - "User-Agent: %s"`,
 			req.RemoteAddr, req.Proto, req.Method, req.RequestURI,
-			getStatus(rw), getWrote(rw), // %v(%s)
+			getStatus(rw), getWrote(rw), // %s(%s)
 			req.Header.Get("User-Agent"))
 	}
 }
@@ -145,7 +145,7 @@ func GenerateArchiveEndpoint(archive drain.ArchiverDrain) http.HandlerFunc {
 		if level == "" {
 			level = "TRACE"
 		}
-		config.Log.Trace("type: %v, start: %v, end: %v, limit: %v, level: %v, id: %v, tag: %v", kind, start, end, limit, level, host, tag)
+		config.Log.Trace("type: %s, start: %s, end: %s, limit: %s, level: %s, id: %s, tag: %s", kind, start, end, limit, level, host, tag)
 		logLevel := lumber.LvlInt(level)
 		realOffset, err := strconv.ParseInt(start, 0, 64)
 		if err != nil {

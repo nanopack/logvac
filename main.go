@@ -114,7 +114,6 @@ func main() {
 	if err != nil && err.Error() != "" {
 		fmt.Println(err)
 	}
-
 }
 
 func readConfig(ccmd *cobra.Command, args []string) error {
@@ -148,24 +147,24 @@ func startLogvac(ccmd *cobra.Command, args []string) error {
 	// setup authenticator
 	err := authenticator.Init()
 	if err != nil {
-		return fmt.Errorf("Authenticator failed to initialize - %v", err)
+		return fmt.Errorf("Authenticator failed to initialize - %s", err)
 	}
 
 	// initialize drains
 	err = drain.Init()
 	if err != nil {
-		return fmt.Errorf("Drain failed to initialize - %v", err)
+		return fmt.Errorf("Drain failed to initialize - %s", err)
 	}
 
 	// initializes collectors
 	err = collector.Init()
 	if err != nil {
-		return fmt.Errorf("Collector failed to initialize - %v", err)
+		return fmt.Errorf("Collector failed to initialize - %s", err)
 	}
 
 	err = api.Start(collector.CollectHandler)
 	if err != nil {
-		return fmt.Errorf("Api failed to initialize - %v", err)
+		return fmt.Errorf("Api failed to initialize - %s", err)
 	}
 
 	return nil
@@ -174,14 +173,14 @@ func startLogvac(ccmd *cobra.Command, args []string) error {
 func exportLogvac(ccmd *cobra.Command, args []string) error {
 	err := authenticator.Init()
 	if err != nil {
-		return fmt.Errorf("Authenticator failed to initialize - %v", err)
+		return fmt.Errorf("Authenticator failed to initialize - %s", err)
 	}
 
 	var exportWriter io.Writer
 	if portFile != "" {
 		exportWriter, err = os.Create(portFile)
 		if err != nil {
-			return fmt.Errorf("Failed to open file - %v", err)
+			return fmt.Errorf("Failed to open file - %s", err)
 		}
 	} else {
 		exportWriter = os.NewFile(uintptr(syscall.Stdout), "/dev/stdout") // stdout
@@ -189,7 +188,7 @@ func exportLogvac(ccmd *cobra.Command, args []string) error {
 
 	err = authenticator.ExportLogvac(exportWriter)
 	if err != nil {
-		return fmt.Errorf("Failed to export - %v", err)
+		return fmt.Errorf("Failed to export - %s", err)
 	}
 
 	return nil
@@ -198,14 +197,14 @@ func exportLogvac(ccmd *cobra.Command, args []string) error {
 func importLogvac(ccmd *cobra.Command, args []string) error {
 	err := authenticator.Init()
 	if err != nil {
-		return fmt.Errorf("Authenticator failed to initialize - %v", err)
+		return fmt.Errorf("Authenticator failed to initialize - %s", err)
 	}
 
 	var importReader io.Reader
 	if portFile != "" {
 		importReader, err = os.Open(portFile)
 		if err != nil {
-			return fmt.Errorf("Failed to open file - %v", err)
+			return fmt.Errorf("Failed to open file - %s", err)
 		}
 	} else {
 		importReader = os.NewFile(uintptr(syscall.Stdin), "/dev/stdin") // stdin
@@ -213,7 +212,7 @@ func importLogvac(ccmd *cobra.Command, args []string) error {
 
 	err = authenticator.ImportLogvac(importReader)
 	if err != nil {
-		return fmt.Errorf("Failed to import - %v", err)
+		return fmt.Errorf("Failed to import - %s", err)
 	}
 
 	return nil
@@ -222,12 +221,12 @@ func importLogvac(ccmd *cobra.Command, args []string) error {
 func addKey(ccmd *cobra.Command, args []string) error {
 	err := authenticator.Init()
 	if err != nil {
-		return fmt.Errorf("Authenticator failed to initialize - %v", err)
+		return fmt.Errorf("Authenticator failed to initialize - %s", err)
 	}
 
 	err = authenticator.Add(tokenName)
 	if err != nil {
-		return fmt.Errorf("Failed to add token '%v' - %v", tokenName, err)
+		return fmt.Errorf("Failed to add token '%s' - %s", tokenName, err)
 	}
 
 	return nil

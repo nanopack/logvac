@@ -61,7 +61,7 @@ func TestAddDrain(t *testing.T) {
 	rMsg := logvac.Message{}
 	err = json.Unmarshal(r, &rMsg)
 	if err != nil {
-		t.Error(fmt.Errorf("Failed to unmarshal - %v", err))
+		t.Error(fmt.Errorf("Failed to unmarshal - %s", err))
 		t.FailNow()
 	}
 
