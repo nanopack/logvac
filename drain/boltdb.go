@@ -267,66 +267,37 @@ func (a BoltArchive) Expire() {
 					})
 				case float64, int:
 					records := int(saveAmt.(float64)) // assertion is slow, do it once (casting is fast)
-					if os.Getenv("LOGVAC_SEQUENTIAL") != "" {
-						// keep this around for smaller datasets. ...though since bucket.Stats() is so nonperformant maybe we should just get rid of it
-						a.db.Batch(func(tx *bolt.Tx) error {
-							bucket := tx.Bucket([]byte(bucketName))
-							if bucket == nil {
-								config.Log.Trace("No logs of type '%s' found", bucketName)
-								return fmt.Errorf("No logs of type '%s' found", bucketName)
-							}
 
-							// trim the bucket to size
-							c := bucket.Cursor()
-							c.First() // if we ever stop ordering by time (oldest first) we'll need to change this
+					a.db.Batch(func(tx *bolt.Tx) error {
+						bucket := tx.Bucket([]byte(bucketName))
+						if bucket == nil {
+							config.Log.Trace("No logs of type '%s' found", bucketName)
+							return fmt.Errorf("No logs of type '%s' found", bucketName)
+						}
 
-							// loop through and remove extra logs
-							for key_count := int(bucket.Stats().KeyN); key_count > records; key_count-- {
+						// trim the bucket to size
+						c := bucket.Cursor()
+
+						rSaved := 0
+						// loop through and remove extra logs
+						// if we ever stop ordering by time (oldest first) we'll need to change cursor placement
+						for k, v := c.Last(); k != nil && v != nil; k, v = c.Prev() {
+							rSaved += 1
+							// if the number records we've traversed is larger than our limit, delet the current record
+							if rSaved > records {
 								config.Log.Trace("Deleting extra log of type '%s'...", bucketName)
 								err = c.Delete()
 								if err != nil {
 									config.Log.Trace("Failed to delete extra log - %s", err)
 								}
-								c.Next()
 							}
+						}
 
-							config.Log.Trace("=======================================")
-							config.Log.Trace("= DONE CHECKING/DELETING EXPIRED LOGS =")
-							config.Log.Trace("=======================================")
-							return nil
-						})
-					} else {
-						a.db.Batch(func(tx *bolt.Tx) error {
-							bucket := tx.Bucket([]byte(bucketName))
-							if bucket == nil {
-								config.Log.Trace("No logs of type '%s' found", bucketName)
-								return fmt.Errorf("No logs of type '%s' found", bucketName)
-							}
-
-							// trim the bucket to size
-							c := bucket.Cursor()
-
-							rSaved := 0
-							// loop through and remove extra logs
-							// if we ever stop ordering by time (oldest first) we'll need to change cursor placement
-							for k, v := c.Last(); k != nil && v != nil; k, v = c.Prev() {
-								rSaved += 1
-								// if the number records we've traversed is larger than our limit, delet the current record
-								if rSaved > records {
-									config.Log.Trace("Deleting extra log of type '%s'...", bucketName)
-									err = c.Delete()
-									if err != nil {
-										config.Log.Trace("Failed to delete extra log - %s", err)
-									}
-								}
-							}
-
-							config.Log.Trace("=======================================")
-							config.Log.Trace("= DONE CHECKING/DELETING EXPIRED LOGS =")
-							config.Log.Trace("=======================================")
-							return nil
-						})
-					}
+						config.Log.Trace("=======================================")
+						config.Log.Trace("= DONE CHECKING/DELETING EXPIRED LOGS =")
+						config.Log.Trace("=======================================")
+						return nil
+					})
 				default:
 					config.Log.Fatal("Bad log-keep value")
 					os.Exit(1)
