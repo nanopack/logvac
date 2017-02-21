@@ -17,11 +17,6 @@ import (
 	"github.com/nanopack/logvac/core"
 )
 
-var (
-	// How often to clean, exported for testing
-	CleanFreq = 60
-)
-
 type (
 	// BoltArchive is a boltDB archiver
 	BoltArchive struct {
@@ -180,12 +175,16 @@ func (a BoltArchive) Expire() {
 	var logKeep map[string]interface{}
 	err := json.Unmarshal([]byte(config.LogKeep), &logKeep)
 	if err != nil {
-		config.Log.Fatal("Bad JSON syntax for log-keep - %s", err)
-		os.Exit(1) // maybe not?
+		config.Log.Fatal("Bad JSON syntax for log-keep - %s, saving logs indefinitely", err)
+		return
+	}
+
+	if config.CleanFreq < 1 {
+		config.CleanFreq = 60
 	}
 
 	// clean up every minute // todo: maybe 5mins?
-	tick := time.Tick(time.Duration(CleanFreq) * time.Second)
+	tick := time.Tick(time.Duration(config.CleanFreq) * time.Second)
 	for {
 		select {
 		case <-tick:

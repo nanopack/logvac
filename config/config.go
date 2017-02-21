@@ -34,6 +34,7 @@ var (
 	Insecure  = false          // whether or not to start insecure
 	Server    = false          // whether or not to start logvac as a server
 	Version   = false          // whether or not to print version info and exit
+	CleanFreq = 60             // how often to clean log database
 )
 
 // AddFlags adds cli flags to logvac
@@ -60,6 +61,8 @@ func AddFlags(cmd *cobra.Command) {
 	cmd.Flags().BoolVarP(&Server, "server", "s", Server, "Run as server")
 	cmd.Flags().BoolVarP(&Insecure, "insecure", "i", Insecure, "Don't use TLS (used for testing)")
 	cmd.Flags().BoolVarP(&Version, "version", "v", Version, "Print version info and exit")
+	cmd.Flags().IntVar(&CleanFreq, "clean-frequency", CleanFreq, "How often to clean log database")
+	cmd.Flags().MarkHidden("clean-frequency")
 
 	Log = lumber.NewConsoleLogger(lumber.LvlInt("ERROR"))
 }

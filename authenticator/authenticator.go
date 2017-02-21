@@ -29,11 +29,12 @@ var (
 
 // Init initializes the chosen authenticator
 func Init() error {
-	var err error
-	var u *url.URL
-	u, err = url.Parse(config.AuthAddress)
+	u, err := url.Parse(config.AuthAddress)
 	if err != nil {
-		return fmt.Errorf("Failed to parse db connection - %s", err)
+		u, err = url.Parse("boltdb://" + config.AuthAddress)
+		if err != nil {
+			return fmt.Errorf("Failed to parse auth connection - %s", err)
+		}
 	}
 	switch u.Scheme {
 	case "boltdb":

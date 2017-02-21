@@ -60,7 +60,10 @@ func Init() error {
 func archiveInit() error {
 	u, err := url.Parse(config.DbAddress)
 	if err != nil {
-		return fmt.Errorf("Failed to parse db connection - %s", err)
+		u, err = url.Parse("boltdb://" + config.DbAddress)
+		if err != nil {
+			return fmt.Errorf("Failed to parse db connection - %s", err)
+		}
 	}
 	switch u.Scheme {
 	case "boltdb":
@@ -98,7 +101,10 @@ func archiveInit() error {
 func publishInit() error {
 	u, err := url.Parse(config.PubAddress)
 	if err != nil {
-		return fmt.Errorf("Failed to parse publisher connection - %s", err)
+		u, err = url.Parse("mist://" + config.PubAddress) // hard requirement for scheme in go 1.8 (with ip:port only)
+		if err != nil {
+			return fmt.Errorf("Failed to parse publisher connection - %s", err)
+		}
 	}
 	switch u.Scheme {
 	case "mist":
