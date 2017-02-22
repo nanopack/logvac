@@ -59,7 +59,7 @@ func TestPublish(t *testing.T) {
 // manually configure and start internals
 func mistInitialize() error {
 	var err error
-	drain.CleanFreq = 1
+	config.CleanFreq = 1
 	config.LogKeep = `{"app": "1s", "deploy":0}`
 	config.LogKeep = `{"app": "1s", "deploy":0, "a":"1m", "aa":"1h", "b":"1d", "c":"1w", "d":"1y", "e":"1"}`
 	config.Log = lumber.NewConsoleLogger(lumber.LvlInt("ERROR"))

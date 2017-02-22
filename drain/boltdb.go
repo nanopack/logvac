@@ -17,11 +17,6 @@ import (
 	"github.com/nanopack/logvac/core"
 )
 
-var (
-	// How often to clean, exported for testing
-	CleanFreq = 60
-)
-
 type (
 	// BoltArchive is a boltDB archiver
 	BoltArchive struct {
@@ -170,7 +165,7 @@ func (a BoltArchive) Write(msg logvac.Message) {
 	}
 }
 
-// Expire cleans up old logs
+// Expire cleans up old logs by date or volume of logs
 func (a BoltArchive) Expire() {
 	// if log-keep is "" expire is disabled
 	if config.LogKeep == "" {
@@ -180,17 +175,21 @@ func (a BoltArchive) Expire() {
 	var logKeep map[string]interface{}
 	err := json.Unmarshal([]byte(config.LogKeep), &logKeep)
 	if err != nil {
-		config.Log.Fatal("Bad JSON syntax for log-keep - %s", err)
-		os.Exit(1) // maybe not?
+		config.Log.Fatal("Bad JSON syntax for log-keep - %s, saving logs indefinitely", err)
+		return
+	}
+
+	if config.CleanFreq < 1 {
+		config.CleanFreq = 60
 	}
 
 	// clean up every minute // todo: maybe 5mins?
-	tick := time.Tick(time.Duration(CleanFreq) * time.Second)
+	tick := time.Tick(time.Duration(config.CleanFreq) * time.Second)
 	for {
 		select {
 		case <-tick:
-			for k, v := range logKeep { // todo: maybe rather/also loop through buckets
-				switch v.(type) {
+			for bucketName, saveAmt := range logKeep { // todo: maybe rather/also loop through buckets
+				switch saveAmt.(type) {
 				case string:
 					var expireTime = time.Now().UnixNano()
 
@@ -205,7 +204,7 @@ func (a BoltArchive) Expire() {
 						NANO_SEC  int64 = NANO_MIN / 60
 					)
 
-					match := r.FindStringSubmatch(v.(string)) // "2w"
+					match := r.FindStringSubmatch(saveAmt.(string)) // "2w"
 					if len(match) == 3 {
 						number, err := strconv.ParseInt(match[1], 0, 64)
 						if err != nil {
@@ -226,63 +225,78 @@ func (a BoltArchive) Expire() {
 						case "y": // year
 							duration = NANO_YEAR * number
 						default: // 2 weeks
-							config.Log.Debug("Keeping '%s' logs for 2 weeks", k)
+							config.Log.Debug("Keeping '%s' logs for 2 weeks", bucketName)
 							duration = NANO_WEEK * 2
 						}
 					}
 
 					expireTime = expireTime - duration
 
-					a.db.Update(func(tx *bolt.Tx) error {
-						bucket := tx.Bucket([]byte(k))
+					a.db.Batch(func(tx *bolt.Tx) error {
+						bucket := tx.Bucket([]byte(bucketName))
 						if bucket == nil {
-							config.Log.Trace("No logs of type '%s' found", k)
-							return fmt.Errorf("No logs of type '%s' found", k)
+							config.Log.Trace("No logs of type '%s' found", bucketName)
+							return fmt.Errorf("No logs of type '%s' found", bucketName)
 						}
 
 						c := bucket.Cursor()
 
 						// loop through and remove outdated logs
-						for kk, vv := c.First(); kk != nil; kk, vv = c.Next() {
+						for k, v := c.First(); k != nil; k, v = c.Next() {
 							var logMessage logvac.Message
-							err := json.Unmarshal([]byte(vv), &logMessage)
+							err := json.Unmarshal([]byte(v), &logMessage)
 							if err != nil {
 								config.Log.Fatal("Bad JSON syntax in log message - %s", err)
 							}
 							if logMessage.UTime < expireTime {
-								config.Log.Trace("Deleting expired log of type '%s'...", k)
+								config.Log.Trace("Deleting expired log of type '%s'...", bucketName)
 								err = c.Delete()
 								if err != nil {
 									config.Log.Trace("Failed to delete expired log - %s", err)
 								}
+							} else { // don't continue looping through newer logs (resource/file-lock hog)
+								break
 							}
 						}
+
+						config.Log.Trace("=======================================")
+						config.Log.Trace("= DONE CHECKING/DELETING EXPIRED LOGS =")
+						config.Log.Trace("=======================================")
 						return nil
-					}) // db.Update
-				case float64:
-					// todo: maybe View, then Update within and remove only those marked records?
-					a.db.Update(func(tx *bolt.Tx) error {
-						bucket := tx.Bucket([]byte(k))
+					})
+				case float64, int:
+					records := int(saveAmt.(float64)) // assertion is slow, do it once (casting is fast)
+
+					a.db.Batch(func(tx *bolt.Tx) error {
+						bucket := tx.Bucket([]byte(bucketName))
 						if bucket == nil {
-							config.Log.Trace("No logs of type '%s' found", k)
-							return fmt.Errorf("No logs of type '%s' found", k)
+							config.Log.Trace("No logs of type '%s' found", bucketName)
+							return fmt.Errorf("No logs of type '%s' found", bucketName)
 						}
 
 						// trim the bucket to size
 						c := bucket.Cursor()
-						c.First()
 
+						rSaved := 0
 						// loop through and remove extra logs
-						for key_count := float64(bucket.Stats().KeyN); key_count > v.(float64); key_count-- {
-							config.Log.Trace("Deleting extra log of type '%s'...", k)
-							err = c.Delete()
-							if err != nil {
-								config.Log.Trace("Failed to delete extra log - %s", err)
+						// if we ever stop ordering by time (oldest first) we'll need to change cursor placement
+						for k, v := c.Last(); k != nil && v != nil; k, v = c.Prev() {
+							rSaved += 1
+							// if the number records we've traversed is larger than our limit, delet the current record
+							if rSaved > records {
+								config.Log.Trace("Deleting extra log of type '%s'...", bucketName)
+								err = c.Delete()
+								if err != nil {
+									config.Log.Trace("Failed to delete extra log - %s", err)
+								}
 							}
-							c.Next()
 						}
+
+						config.Log.Trace("=======================================")
+						config.Log.Trace("= DONE CHECKING/DELETING EXPIRED LOGS =")
+						config.Log.Trace("=======================================")
 						return nil
-					}) // db.Update
+					})
 				default:
 					config.Log.Fatal("Bad log-keep value")
 					os.Exit(1)
