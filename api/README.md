@@ -54,38 +54,38 @@ Note: * = required on submit
 
 add auth key - attempt
 ```
-$ curl -ik https://localhost:1234/add-key -H 'X-USER-TOKEN: user'
+$ curl -ik https://localhost:6360/add-key -H 'X-USER-TOKEN: user'
 HTTP/1.1 401 Unauthorized
 ```
 
 add auth key - success
 ```
-$ curl -ik https://localhost:1234/add-key -H 'X-USER-TOKEN: user' -H 'X-AUTH-TOKEN: secret'
+$ curl -ik https://localhost:6360/add-key -H 'X-USER-TOKEN: user' -H 'X-AUTH-TOKEN: secret'
 HTTP/1.1 200 OK
 ```
 
 publish log - attempt
 ```
-$ curl -ik https://localhost:1234 -d '{"id":"my-app","type":"deploy","message":"$ mv nanobox/.htaccess .htaccess\n[✓] SUCCESS"}'
+$ curl -ik https://localhost:6360 -d '{"id":"my-app","type":"deploy","message":"$ mv nanobox/.htaccess .htaccess\n[✓] SUCCESS"}'
 HTTP/1.1 401 Unauthorized
 ```
 
 publish log - success
 ```
-$ curl -ik https://localhost:1234 -H 'X-USER-TOKEN: user' -d '{"id":"my-app","type":"deploy","message":"$ mv nanobox/.htaccess .htaccess\n[✓] SUCCESS"}'
+$ curl -ik https://localhost:6360 -H 'X-USER-TOKEN: user' -d '{"id":"my-app","type":"deploy","message":"$ mv nanobox/.htaccess .htaccess\n[✓] SUCCESS"}'
 sucess!
 HTTP/1.1 200 OK
 ```
 
 get deploy logs
 ```
-$ curl -k https://localhost:1234?kind=deploy -H 'X-USER-TOKEN: user'
+$ curl -k https://localhost:6360?kind=deploy -H 'X-USER-TOKEN: user'
 [{"time":"2016-03-07T15:48:57.668893791-07:00","id":"my-app","tag":"","type":"deploy","priority":0,"message":"$ mv nanobox/.htaccess .htaccess\n[✓] SUCCESS"}]
 ```
 
 get app logs
 ```
-$ curl -k https://localhost:1234 -H 'X-USER-TOKEN: user'
+$ curl -k https://localhost:6360 -H 'X-USER-TOKEN: user'
 []
 ```
 

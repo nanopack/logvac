@@ -16,11 +16,11 @@ logvac -s
 logvac add-token -t TOKEN
 
 # add a log via http
-curl -k https://127.0.0.1:1234 -H "X-USER-TOKEN: TOKEN" \
+curl -k https://127.0.0.1:6360 -H "X-USER-TOKEN: TOKEN" \
      -d '{"id":"log-test", "type":"log", "message":"my first log"}'
 
 # view log via http
-curl -k "https://127.0.0.1:1234?type=log&auth=TOKEN"
+curl -k "https://127.0.0.1:6360?type=log&auth=TOKEN"
 
 # Congratulations logmaster!
 ```
@@ -33,7 +33,7 @@ curl -k "https://127.0.0.1:1234?type=log&auth=TOKEN"
 `logvac add-token -t TOKEN`
 
 - If your logs aren't showing up where you think they should, try checking the 'app' type and see if they are there. By default logvac will log to `type=app` (unless changed via config options). If you have a malformed entry (even with a type specified) it will end up there:
-`curl -k "https://127.0.0.1:1234?type=app&auth=TOKEN"`
+`curl -k "https://127.0.0.1:6360?type=app&auth=TOKEN"`
 
 ## Usage
 ```
@@ -55,9 +55,9 @@ Flags:
   -C, --cors-allow string     Sets the 'Access-Control-Allow-Origin' header (default "*")
   -d, --db-address string     Log storage address (default "boltdb:///var/db/logvac.bolt")
   -i, --insecure              Don't use TLS (used for testing)
-  -a, --listen-http string    API listen address (same endpoint for http log collection) (default "127.0.0.1:1234")
-  -t, --listen-tcp string     TCP log collection endpoint (default "127.0.0.1:1235")
-  -u, --listen-udp string     UDP log collection endpoint (default "127.0.0.1:1234")
+  -a, --listen-http string    API listen address (same endpoint for http log collection) (default "127.0.0.1:6360")
+  -t, --listen-tcp string     TCP log collection endpoint (default "127.0.0.1:6361")
+  -u, --listen-udp string     UDP log collection endpoint (default "127.0.0.1:514")
   -k, --log-keep string       Age or number of logs to keep per type '{"app":"2w", "deploy": 10}'' (int or X(m)in, (h)our,  (d)ay, (w)eek, (y)ear) (default "{\"app\":\"2w\"}")
   -l, --log-level string      Level at which to log (default "info")
   -L, --log-type string       Default type to apply to incoming logs (commonly used: app|deploy) (default "app")
@@ -72,9 +72,9 @@ Config File: (takes precedence over cli flags)
 ```json
 // logvac.json
 {
-  "listen-http": "127.0.0.1:1234",
-  "listen-udp": "127.0.0.1:1234",
-  "listen-tcp": "127.0.0.1:1235",
+  "listen-http": "127.0.0.1:6360",
+  "listen-udp": "127.0.0.1:514",
+  "listen-tcp": "127.0.0.1:6361",
   "pub-address": "",
   "pub-auth": "",
   "db-address": "boltdb:///var/db/logvac.bolt",
