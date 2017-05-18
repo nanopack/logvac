@@ -9,25 +9,26 @@ Simple, lightweight, api-driven log aggregation service with realtime push capab
 ## Quickstart
 
 ```sh
-# start server with defaults
-logvac -s
+# start server (may require commented flags)
+logvac -s # -A /tmp/auth.db -d /tmp/logvac.db -u 127.0.0.1:6361
 
 # add auth token (using default 'auth-address')
 logvac add-token -t TOKEN
 
 # add a log via http
-curl -k https://127.0.0.1:6360 -H "X-USER-TOKEN: TOKEN" \
+curl -k https://127.0.0.1:6360/logs -H "X-USER-TOKEN: TOKEN" \
      -d '{"id":"log-test", "type":"log", "message":"my first log"}'
 
 # view log via http
-curl -k "https://127.0.0.1:6360?type=log&auth=TOKEN"
+curl -k "https://127.0.0.1:6360/logs?type=log&auth=TOKEN"
 
 # Congratulations logmaster!
 ```
 
 #### Gotchas
-- If you're seeing the following error, run logvac with admin or sudo privileges:
-`FATAL Authenticator failed to initialize - open /var/db/log-auth.bolt: permission denied`
+- If you're seeing any of the following errors, run logvac with admin or sudo privileges (or adjust your configuration):
+  - `Authenticator failed to initialize - open /var/db/log-auth.bolt: permission denied`
+  - `Collector failed to initialize - listen udp 127.0.0.1:514: bind: permission denied`
 
 - If logvac doesn't seem to be doing anything (adding/fecthing logs), there is a chance you've started the server with authentication (the default) but have forgotten to add a token:
 `logvac add-token -t TOKEN`

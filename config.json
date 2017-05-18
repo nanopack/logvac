@@ -1,0 +1,15 @@
+{
+  "listen-http": "0.0.0.0:6360",
+  "listen-udp": "0.0.0.0:6361",
+  "listen-tcp": "0.0.0.0:6361",
+  "pub-address": "mist://localhost:1445",
+  "pub-auth": "secret",
+  "db-address": "boltdb:///app/db/db.bolt",
+  "auth-address": "boltdb:///app/db/log-auth.bolt",
+  "log-keep": "{\"app\":\"5m\"}",
+  "log-type": "app",
+  "log-level": "debug",
+  "token": "secret",
+  "server": true,
+  "insecure": true
+}

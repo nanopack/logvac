@@ -30,3 +30,4 @@ build
 logvac
 logvac.json
 *.cover*
+db
