@@ -12,9 +12,9 @@ Logvac can receive logs from rsyslog
 >```
 # rsyslog.conf style - more info look at rsyslog.conf(5)
 # Single '@' sends to UDP
-*.* @127.0.0.1:1234
+*.* @127.0.0.1:514
 # Double '@' sends to TCP
-*.* @@127.0.0.1:1235
+*.* @@127.0.0.1:6361
 ```
 > `sudo service rsyslog restart` with the preceding config file should start dumping logs to logvac
 
