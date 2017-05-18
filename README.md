@@ -26,8 +26,9 @@ curl -k "https://127.0.0.1:6360?type=log&auth=TOKEN"
 ```
 
 #### Gotchas
-- If you're seeing the following error, run logvac with admin or sudo privileges:
-`FATAL Authenticator failed to initialize - open /var/db/log-auth.bolt: permission denied`
+- If you're seeing any of the following errors, run logvac with admin or sudo privileges (or adjust your configuration):
+  - `FATAL Authenticator failed to initialize - open /var/db/log-auth.bolt: permission denied`
+  - `Collector failed to initialize - listen udp 127.0.0.1:514: bind: permission denied`
 
 - If logvac doesn't seem to be doing anything (adding/fecthing logs), there is a chance you've started the server with authentication (the default) but have forgotten to add a token:
 `logvac add-token -t TOKEN`
