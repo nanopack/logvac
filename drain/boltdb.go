@@ -58,7 +58,7 @@ func (a BoltArchive) Close() {
 }
 
 // Slice returns a slice of logs based on the name, offset, limit, and log-level
-func (a BoltArchive) Slice(name, host, tag string, offset, end, limit int64, level int) ([]logvac.Message, error) {
+func (a BoltArchive) Slice(name, host string, tag []string, offset, end, limit int64, level int) ([]logvac.Message, error) {
 	var messages []logvac.Message
 
 	err := a.db.View(func(tx *bolt.Tx) error {
@@ -113,12 +113,24 @@ func (a BoltArchive) Slice(name, host, tag string, offset, end, limit int64, lev
 				limit = 0
 			}
 			if msg.Priority >= level {
-				if msg.Id == host || host == "" {
-					// todo: negate here if tag[0] == "!"
-					if msg.Tag == tag || tag == "" {
+				if host == "" || msg.Id == host {
+					// todo: negate here if tag starts with "!"
+					if len(tag) == 0 {
 						limit--
 						// prepend messages with new message (display newest last)
 						messages = append([]logvac.Message{msg}, messages...)
+					} else {
+						for x := range msg.Tag {
+							for y := range tag {
+								if msg.Tag[x] == tag[y] {
+									limit--
+									// prepend messages with new message (display newest last)
+									messages = append([]logvac.Message{msg}, messages...)
+
+									return nil
+								}
+							}
+						}
 					}
 				}
 			}
@@ -244,6 +256,7 @@ func (a BoltArchive) Expire() {
 						// loop through and remove outdated logs
 						for k, v := c.First(); k != nil; k, v = c.Next() {
 							var logMessage logvac.Message
+							// todo: seems expensive...
 							err := json.Unmarshal([]byte(v), &logMessage)
 							if err != nil {
 								config.Log.Fatal("Bad JSON syntax in log message - %s", err)

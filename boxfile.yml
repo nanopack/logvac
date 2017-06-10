@@ -15,6 +15,7 @@ deploy.config:
     - go get github.com/nanopack/mist
     - cp $(which mist) $APP_DIR/mist
     - cp $CODE_DIR/config.json $APP_DIR/config.json
+    - cp $CODE_DIR/example-narc.conf $APP_DIR/narc.conf
 
 data.storage:
   image: nanobox/unfs
@@ -31,3 +32,5 @@ web.logvac:
   start:
     mist: './mist --server --listeners "tcp://0.0.0.0:1445"'
     logvac: './logvac -c config.json'
+    debug-mist: './mist subscribe --tags log' # for debugging, send logs to `/var/log/gonano/logvac/current` to view in `deploy dry-run` output
+    debug-narc: 'narcd narc.conf'             # for debugging, send logs to `/var/log/gonano/logvac/current` to view in `deploy dry-run` output

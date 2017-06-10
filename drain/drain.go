@@ -15,7 +15,7 @@ type (
 		// Init initializes the archiver drain
 		Init() error
 		// Slice returns a slice of logs based on the name, offset, limit, and log-level
-		Slice(name, host, tag string, offset, end, limit int64, level int) ([]logvac.Message, error)
+		Slice(name, host string, tag []string, offset, end, limit int64, level int) ([]logvac.Message, error)
 		// Write writes the message to database
 		Write(msg logvac.Message)
 		// Expire cleans up old logs

@@ -25,9 +25,9 @@ type (
 	Message struct {
 		Time     time.Time `json:"time"`
 		UTime    int64     `json:"utime"`
-		Id       string    `json:"id"`  // ignoreifempty?
-		Tag      string    `json:"tag"` // ignoreifempty? // []string?
-		Type     string    `json:"type"`
+		Id       string    `json:"id"`   // ignoreifempty? // If setting multiple tags in id (syslog), set hostname first
+		Tag      []string  `json:"tag"`  // ignoreifempty?
+		Type     string    `json:"type"` // Can be set if logs are submitted via http (deploy logs)
 		Priority int       `json:"priority"`
 		Content  string    `json:"message"`
 	}
