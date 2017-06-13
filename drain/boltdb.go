@@ -122,7 +122,7 @@ func (a BoltArchive) Slice(name, host string, tag []string, offset, end, limit i
 					} else {
 						for x := range msg.Tag {
 							for y := range tag {
-								if msg.Tag[x] == tag[y] {
+								if tag[y] == "" || msg.Tag[x] == tag[y] {
 									limit--
 									// prepend messages with new message (display newest last)
 									messages = append([]logvac.Message{msg}, messages...)

@@ -47,7 +47,8 @@ func (m Mist) Init() error {
 
 // Publish utilizes mist's Publish to "drain" a log message
 func (m *Mist) Publish(msg logvac.Message) {
-	tags := []string{"log", msg.Type, msg.Id}
+	// id is included in the tags
+	tags := []string{"log", msg.Type}
 	tags = append(tags, msg.Tag...)
 	// remove blank tags
 cleanTags:

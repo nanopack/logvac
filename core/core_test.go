@@ -39,7 +39,7 @@ func TestAddDrain(t *testing.T) {
 		Time:     time.Now(),
 		UTime:    time.Now().UnixNano(),
 		Id:       "myhost",
-		Tag:      "test[drains]",
+		Tag:      []string{"test[drains]"},
 		Type:     "app",
 		Priority: 4,
 		Content:  "This is quite important",
