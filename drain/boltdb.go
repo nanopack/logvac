@@ -110,29 +110,30 @@ func (a BoltArchive) Slice(name, host string, tag []string, offset, end, limit i
 			if string(k) == final.String() {
 				limit = 0
 			}
+
+			// unmarshal to check if match.. seems expensive
+			if err := json.Unmarshal(v, &msg); err != nil {
+				// for backwards compatibility (needed for approx 2 weeks only until old logs get cleaned up)
+				if err2 := json.Unmarshal(v, &oMsg); err2 != nil {
+					return fmt.Errorf("Couldn't unmarshal message - %s - %s", err, err2)
+				}
+				// convert old message to new message for saving
+				msg.Time = oMsg.Time
+				msg.UTime = oMsg.UTime
+				msg.Id = oMsg.Id
+				msg.Tag = []string{oMsg.Tag}
+				msg.Type = oMsg.Type
+				msg.Priority = oMsg.Priority
+				msg.Content = oMsg.Content
+
+				// return fmt.Errorf("Couldn't unmarshal message - %s", err)
+			}
+
 			if msg.Priority >= level {
 				if host == "" || msg.Id == host {
 					// todo: negate here if tag starts with "!"
 					if len(tag) == 0 {
 						limit--
-
-						// unmarshal only if we need it, hopefully speeds up historic logs
-						if err := json.Unmarshal(v, &msg); err != nil {
-							// for backwards compatibility (needed for approx 2 weeks only until old logs get cleaned up)
-							if err2 := json.Unmarshal(v, &oMsg); err2 != nil {
-								return fmt.Errorf("Couldn't unmarshal message - %s - %s", err, err2)
-							}
-							// convert old message to new message for saving
-							msg.Time = oMsg.Time
-							msg.UTime = oMsg.UTime
-							msg.Id = oMsg.Id
-							msg.Tag = []string{oMsg.Tag}
-							msg.Type = oMsg.Type
-							msg.Priority = oMsg.Priority
-							msg.Content = oMsg.Content
-
-							// return fmt.Errorf("Couldn't unmarshal message - %s", err)
-						}
 
 						// prepend messages with new message (display newest last)
 						messages = append([]logvac.Message{msg}, messages...)
@@ -141,24 +142,6 @@ func (a BoltArchive) Slice(name, host string, tag []string, offset, end, limit i
 							for y := range tag {
 								if tag[y] == "" || msg.Tag[x] == tag[y] {
 									limit--
-
-									// unmarshal only if we need it, hopefully speeds up historic logs
-									if err := json.Unmarshal(v, &msg); err != nil {
-										// for backwards compatibility (needed for approx 2 weeks only until old logs get cleaned up)
-										if err2 := json.Unmarshal(v, &oMsg); err2 != nil {
-											return fmt.Errorf("Couldn't unmarshal message - %s - %s", err, err2)
-										}
-										// convert old message to new message for saving
-										msg.Time = oMsg.Time
-										msg.UTime = oMsg.UTime
-										msg.Id = oMsg.Id
-										msg.Tag = []string{oMsg.Tag}
-										msg.Type = oMsg.Type
-										msg.Priority = oMsg.Priority
-										msg.Content = oMsg.Content
-
-										// return fmt.Errorf("Couldn't unmarshal message - %s", err)
-									}
 
 									// prepend messages with new message (display newest last)
 									messages = append([]logvac.Message{msg}, messages...)
