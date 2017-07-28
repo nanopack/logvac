@@ -45,7 +45,7 @@ func NewBoltArchive(path string) (*BoltArchive, error) {
 }
 
 // Init initializes the archiver drain
-func (a BoltArchive) Init() error {
+func (a *BoltArchive) Init() error {
 	// add drain
 	logvac.AddDrain("historical", a.Write)
 
@@ -53,12 +53,12 @@ func (a BoltArchive) Init() error {
 }
 
 // Close closes the bolt db
-func (a BoltArchive) Close() {
+func (a *BoltArchive) Close() {
 	a.db.Close()
 }
 
 // Slice returns a slice of logs based on the name, offset, limit, and log-level
-func (a BoltArchive) Slice(name, host string, tag []string, offset, end, limit int64, level int) ([]logvac.Message, error) {
+func (a *BoltArchive) Slice(name, host string, tag []string, offset, end, limit int64, level int) ([]logvac.Message, error) {
 	var messages []logvac.Message
 
 	err := a.db.View(func(tx *bolt.Tx) error {
@@ -105,7 +105,7 @@ func (a BoltArchive) Slice(name, host string, tag []string, offset, end, limit i
 		// todo: make limit be len(bucket)? if limit < 0
 		for ; k != nil && limit > 0; k, v = c.Prev() {
 			msg := logvac.Message{}
-			oMsg := logvac.OldMessage{}
+			oMsg := logvac.OldMessage{} // old message (type has changed for multi-tenancy)
 			// if specified end is reached, be done
 			if string(k) == final.String() {
 				limit = 0
@@ -166,7 +166,7 @@ func (a BoltArchive) Slice(name, host string, tag []string, offset, end, limit i
 }
 
 // Write writes the message to database
-func (a BoltArchive) Write(msg logvac.Message) {
+func (a *BoltArchive) Write(msg logvac.Message) {
 	config.Log.Trace("Bolt archive writing...")
 	err := a.db.Batch(func(tx *bolt.Tx) error {
 		bucket, err := tx.CreateBucketIfNotExists([]byte(msg.Type))
@@ -197,9 +197,10 @@ func (a BoltArchive) Write(msg logvac.Message) {
 }
 
 // Expire cleans up old logs by date or volume of logs
-func (a BoltArchive) Expire() {
+func (a *BoltArchive) Expire() {
 	// if log-keep is "" expire is disabled
 	if config.LogKeep == "" {
+		config.Log.Debug("Log expiration disabled")
 		return
 	}
 
@@ -214,28 +215,33 @@ func (a BoltArchive) Expire() {
 		config.CleanFreq = 60
 	}
 
+	config.Log.Trace("LogKeep - %v; CleanFreq - %d", logKeep, config.CleanFreq)
+
 	// clean up every minute // todo: maybe 5mins?
 	tick := time.Tick(time.Duration(config.CleanFreq) * time.Second)
+
+	r, _ := regexp.Compile("([0-9]+)([a-za-z]+)")
+	var (
+		NANO_MIN  int64 = 60000000000
+		NANO_HOUR int64 = NANO_MIN * 60
+		NANO_DAY  int64 = NANO_HOUR * 24
+		NANO_WEEK int64 = NANO_DAY * 7
+		NANO_YEAR int64 = NANO_WEEK * 52
+		duration  int64 = NANO_WEEK * 2
+		NANO_SEC  int64 = NANO_MIN / 60
+	)
+
 	for {
 		select {
 		case <-tick:
 			for bucketName, saveAmt := range logKeep { // todo: maybe rather/also loop through buckets
+				config.Log.Trace("bucketName - %s; saveAmt - %v", bucketName, saveAmt)
 				switch saveAmt.(type) {
 				case string:
 					var expireTime = time.Now().UnixNano()
 
-					r, _ := regexp.Compile("([0-9]+)([a-zA-Z]+)")
-					var (
-						NANO_MIN  int64 = 60000000000
-						NANO_HOUR int64 = NANO_MIN * 60
-						NANO_DAY  int64 = NANO_HOUR * 24
-						NANO_WEEK int64 = NANO_DAY * 7
-						NANO_YEAR int64 = NANO_WEEK * 52
-						duration  int64 = NANO_WEEK * 2
-						NANO_SEC  int64 = NANO_MIN / 60
-					)
-
 					match := r.FindStringSubmatch(saveAmt.(string)) // "2w"
+					config.Log.Trace("SaveAmt - %v, match - %v", saveAmt, match)
 					if len(match) == 3 {
 						number, err := strconv.ParseInt(match[1], 0, 64)
 						if err != nil {
@@ -244,16 +250,22 @@ func (a BoltArchive) Expire() {
 						}
 						switch match[2] {
 						case "s": // second // for testing
+							config.Log.Debug("Keeping logs for %d seconds", number)
 							duration = NANO_SEC * number
 						case "m": // minute
+							config.Log.Debug("Keeping logs for %d minutes", number)
 							duration = NANO_MIN * number
 						case "h": // hour
+							config.Log.Debug("Keeping logs for %d hours", number)
 							duration = NANO_HOUR * number
 						case "d": // day
+							config.Log.Debug("Keeping logs for %d days", number)
 							duration = NANO_DAY * number
 						case "w": // week
+							config.Log.Debug("Keeping logs for %d weeks", number)
 							duration = NANO_WEEK * number
 						case "y": // year
+							config.Log.Debug("Keeping logs for %d years", number)
 							duration = NANO_YEAR * number
 						default: // 2 weeks
 							config.Log.Debug("Keeping '%s' logs for 2 weeks", bucketName)
@@ -262,45 +274,50 @@ func (a BoltArchive) Expire() {
 					}
 
 					expireTime = expireTime - duration
+					eTime := &bytes.Buffer{}
+					if err := binary.Write(eTime, binary.BigEndian, expireTime); err != nil {
+						config.Log.Error("Failed to convert expire time to binary - %s", err.Error())
+						continue
+					}
 
+					config.Log.Debug("Starting age cleanup batch...")
 					a.db.Batch(func(tx *bolt.Tx) error {
 						bucket := tx.Bucket([]byte(bucketName))
 						if bucket == nil {
-							config.Log.Trace("No logs of type '%s' found", bucketName)
+							config.Log.Debug("No logs of type '%s' found", bucketName)
 							return fmt.Errorf("No logs of type '%s' found", bucketName)
 						}
 
 						c := bucket.Cursor()
 
+						var err error
+
 						// loop through and remove outdated logs
-						for k, v := c.First(); k != nil; k, v = c.Next() {
-							var logMessage struct {
-								UTime int64 `json:"utime"`
-							}
-							// todo: seems expensive...
-							err := json.Unmarshal([]byte(v), &logMessage)
-							if err != nil {
-								config.Log.Fatal("Bad JSON syntax in log message - %s", err)
-							}
-							if logMessage.UTime < expireTime {
+						for k, _ := c.First(); k != nil; k, _ = c.Next() {
+							// if logMessage.UTime < expireTime {
+							if bytes.Compare(k, eTime.Bytes()) == -1 {
 								config.Log.Trace("Deleting expired log of type '%s'...", bucketName)
 								err = c.Delete()
 								if err != nil {
-									config.Log.Trace("Failed to delete expired log - %s", err)
+									config.Log.Debug("Failed to delete expired log - %s", err)
 								}
+								config.Log.Trace("Deleted log")
 							} else { // don't continue looping through newer logs (resource/file-lock hog)
+								config.Log.Trace("Done with old logs")
 								break
 							}
 						}
 
-						config.Log.Trace("=======================================")
-						config.Log.Trace("= DONE CHECKING/DELETING EXPIRED LOGS =")
-						config.Log.Trace("=======================================")
+						config.Log.Debug("=======================================")
+						config.Log.Debug("= DONE CHECKING/DELETING EXPIRED LOGS =")
+						config.Log.Debug("=======================================")
 						return nil
 					})
+					config.Log.Trace("Done defining batch")
 				case float64, int:
 					records := int(saveAmt.(float64)) // assertion is slow, do it once (casting is fast)
 
+					config.Log.Debug("Starting record cleanup batch...")
 					a.db.Batch(func(tx *bolt.Tx) error {
 						bucket := tx.Bucket([]byte(bucketName))
 						if bucket == nil {
@@ -326,17 +343,19 @@ func (a BoltArchive) Expire() {
 							}
 						}
 
-						config.Log.Trace("=======================================")
-						config.Log.Trace("= DONE CHECKING/DELETING EXPIRED LOGS =")
-						config.Log.Trace("=======================================")
+						config.Log.Debug("=======================================")
+						config.Log.Debug("= DONE CHECKING/DELETING EXPIRED LOGS =")
+						config.Log.Debug("=======================================")
 						return nil
 					})
 				default:
+					// todo: we should pre-parse these values and exit on startup, not x minutes into running
 					config.Log.Fatal("Bad log-keep value")
 					os.Exit(1)
 				}
 			} // range logKeep
 		case <-a.Done:
+			config.Log.Debug("Done recieved on channel. (Cleanup halting)")
 			return
 		}
 	}
