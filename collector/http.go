@@ -38,7 +38,7 @@ func GenerateHttpCollector() http.HandlerFunc {
 			// keep body as "message" and make up priority
 			msg.Content = string(body)
 			msg.Priority = 2
-			msg.Tag = "http-raw"
+			msg.Tag = []string{"http-raw"}
 		}
 
 		if msg.Type == "" {

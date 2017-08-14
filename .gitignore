@@ -31,3 +31,5 @@ logvac
 logvac.json
 *.cover*
 db
+vendor/*/
+

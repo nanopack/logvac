@@ -21,13 +21,26 @@ type (
 		Trace(string, ...interface{})
 	}
 
+	// DEPRECATED: Use Message. OldMessage defines the structure of an old log message
+	// I did what I hate most about docker, changed an exported struct definition. Sorry any client
+	// using this.. at least I left it around?
+	OldMessage struct {
+		Time     time.Time `json:"time"`
+		UTime    int64     `json:"utime"`
+		Id       string    `json:"id"` // If setting multiple tags in id (syslog), set hostname first
+		Tag      string    `json:"tag"`
+		Type     string    `json:"type"` // Can be set if logs are submitted via http (deploy logs)
+		Priority int       `json:"priority"`
+		Content  string    `json:"message"`
+	}
+
 	// Message defines the structure of a log message
 	Message struct {
 		Time     time.Time `json:"time"`
 		UTime    int64     `json:"utime"`
-		Id       string    `json:"id"`  // ignoreifempty?
-		Tag      string    `json:"tag"` // ignoreifempty? // []string?
-		Type     string    `json:"type"`
+		Id       string    `json:"id"`   // ignoreifempty? // If setting multiple tags in id (syslog), set hostname first
+		Tag      []string  `json:"tag"`  // ignoreifempty?
+		Type     string    `json:"type"` // Can be set if logs are submitted via http (deploy logs)
 		Priority int       `json:"priority"`
 		Content  string    `json:"message"`
 	}

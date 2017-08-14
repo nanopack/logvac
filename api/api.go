@@ -120,10 +120,11 @@ func verify(fn http.HandlerFunc) http.HandlerFunc {
 // note: javascript number precision may cause unexpected results (missing logs within 100 nanosecond window)
 func GenerateArchiveEndpoint(archive drain.ArchiverDrain) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
+		// /logs?id=&type=app&start=0&end=0&limit=50
 		query := req.URL.Query()
 
 		host := query.Get("id")
-		tag := query.Get("tag")
+		tag := query["tag"]
 
 		kind := query.Get("type")
 		if kind == "" {
