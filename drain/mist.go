@@ -90,6 +90,7 @@ func (m *Mist) retryPublish(tags []string, data string) error {
 }
 
 // Close cleanly closes the mist client
-func (m *Mist) Close() {
+func (m *Mist) Close() error {
 	m.mist.Close()
+	return nil
 }

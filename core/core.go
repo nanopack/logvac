@@ -3,6 +3,7 @@
 package logvac
 
 import (
+	"io"
 	"sync"
 	"time"
 
@@ -43,6 +44,7 @@ type (
 		Type     string    `json:"type"` // Can be set if logs are submitted via http (deploy logs)
 		Priority int       `json:"priority"`
 		Content  string    `json:"message"`
+		Raw      []byte    `json:"raw"`
 	}
 
 	// Logvac defines the structure for the default logvac object
@@ -50,8 +52,16 @@ type (
 		drains map[string]drainChannels
 	}
 
-	// Drain is a function that "drains a Message"
-	Drain func(Message)
+	// Drain defines a third party log drain endpoint (generally, only raw logs get drained)
+	Drain struct {
+		Type       string `json:"type"`             // type of service ("papertrail")
+		URI        string `json:"endpoint"`         // uri of endpoint "log6.papertrailapp.com:199900"
+		AuthKey    string `json:"key,omitempty"`    // key or user for authentication
+		AuthSecret string `json:"secret,omitempty"` // password or secret for authentication
+	}
+
+	// DrainFunc is a function that "drains a Message"
+	DrainFunc func(Message)
 
 	drainChannels struct {
 		send chan Message
@@ -83,11 +93,11 @@ func (l *Logvac) close() {
 }
 
 // AddDrain adds a drain to the listeners and sets its logger
-func AddDrain(tag string, drain Drain) {
+func AddDrain(tag string, drain DrainFunc) {
 	Vac.addDrain(tag, drain)
 }
 
-func (l *Logvac) addDrain(tag string, drain Drain) {
+func (l *Logvac) addDrain(tag string, drain DrainFunc) {
 	channels := drainChannels{
 		done: make(chan bool),
 		send: make(chan Message),
@@ -142,4 +152,33 @@ func (l *Logvac) writeMessage(msg Message) {
 		}(drain)
 	}
 	group.Wait()
+}
+
+func (m Message) eof() bool {
+	return len(m.Raw) == 0
+}
+
+func (m *Message) readByte() byte {
+	// this function assumes that eof() check was done before
+	b := m.Raw[0]
+	m.Raw = m.Raw[1:]
+	return b
+}
+
+func (m *Message) Read(p []byte) (n int, err error) {
+	if m.eof() {
+		err = io.EOF
+		return
+	}
+
+	if c := cap(p); c > 0 {
+		for n < c {
+			p[n] = m.readByte()
+			n++
+			if m.eof() {
+				break
+			}
+		}
+	}
+	return
 }

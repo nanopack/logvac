@@ -141,6 +141,7 @@ func parseMessage(b []byte) (msg logvac.Message) {
 			msg.Tag = append([]string{parsedData["tag"].(string)}, tTag...)
 			msg.Priority = adjust[parsedData["severity"].(int)] // parser guarantees [0,7]
 			msg.Content = parsedData["content"].(string)
+			msg.Raw = b
 			return
 		}
 	}

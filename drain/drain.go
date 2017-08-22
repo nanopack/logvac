@@ -28,13 +28,20 @@ type (
 		Init() error
 		// Publish publishes the tagged data
 		Publish(msg logvac.Message)
+		// Close closes the drain
+		Close() error
 	}
 )
 
 var (
-	Publisher PublisherDrain // default publish drain
-	Archiver  ArchiverDrain  // default archive drain
+	Publisher PublisherDrain            // default publish drain
+	Archiver  ArchiverDrain             // default archive drain
+	drains    map[string]PublisherDrain // contains the third party drains configured (todo: need to persist)
 )
+
+func init() {
+	drains = make(map[string]PublisherDrain, 0)
+}
 
 // Init initializes the archiver and publisher drains if configured
 func Init() error {
@@ -129,4 +136,51 @@ func publishInit() error {
 		return err
 	}
 	return nil
+}
+
+// AddDrain starts draining to a third party log service.
+func AddDrain(d logvac.Drain) error {
+	switch d.Type {
+	case "papertrail":
+		// if it already exists, close it and create a new one
+		if _, ok := drains["papertrail"]; ok {
+			drains["papertrail"].Close()
+		}
+		// pTrail, err := NewPapertrailClient("logs6.papertrailapp.com:19900")
+		pTrail, err := NewPapertrailClient(d.URI)
+		if err != nil {
+			return fmt.Errorf("Failed to create papertrail client - %s", err)
+		}
+		err = pTrail.Init()
+		if err != nil {
+			return fmt.Errorf("Papertrail failed to initialize - %s", err)
+		}
+		drains["papertrail"] = pTrail
+	default:
+		return fmt.Errorf("Drain type not supported")
+	}
+
+	return nil
+}
+
+// RemoveDrain stops draining to a third party log service.
+func RemoveDrain(drainType string) error {
+	if _, ok := drains[drainType]; !ok {
+		return nil
+	}
+	return drains[drainType].Close()
+}
+
+// GetDrain shows the drain information.
+func GetDrain(d logvac.Drain) (*PublisherDrain, error) {
+	drain, ok := drains[d.Type]
+	if !ok {
+		return nil, fmt.Errorf("Drain not found")
+	}
+	return &drain, nil
+}
+
+// ListDrains shows all the drains configured.
+func ListDrains() map[string]PublisherDrain {
+	return drains
 }
