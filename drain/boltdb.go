@@ -54,7 +54,10 @@ func (a *BoltArchive) Init() error {
 
 // Close closes the bolt db
 func (a *BoltArchive) Close() {
-	a.db.Close()
+	err := a.db.Close()
+	if err != nil {
+		config.Log.Error("Faile to close bolt - %s", err.Error())
+	}
 }
 
 // Slice returns a slice of logs based on the name, offset, limit, and log-level

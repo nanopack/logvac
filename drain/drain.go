@@ -41,7 +41,6 @@ var (
 	drains    map[string]PublisherDrain // contains the third party drains configured
 	drainCfg  map[string]logvac.Drain   // contains the third party drain configuration
 	dbDir     string                    // location of db to store drain config
-	drainDB   *BoltArchive              // db to store additional drain configuration
 )
 
 func init() {
@@ -65,11 +64,6 @@ func Init() error {
 			return fmt.Errorf("Failed to initialize publisher - %s", err)
 		}
 		config.Log.Info("Publishing drain '%s' initialized", config.PubAddress)
-	}
-
-	drainDB, err = NewBoltArchive(filepath.Join(dbDir, "drains.bolt"))
-	if err != nil {
-		return fmt.Errorf("Failed to initialize drain db - %s", err)
 	}
 
 	err = InitDrains()
@@ -159,8 +153,14 @@ func publishInit() error {
 
 // InitDrains loads and configures drains from a config file.
 func InitDrains() error {
+	drainDB, err := NewBoltArchive(filepath.Join(dbDir, "drains.bolt"))
+	if err != nil {
+		return fmt.Errorf("Failed to initialize drain db - %s", err)
+	}
+	defer drainDB.Close()
+
 	tDrains := make(map[string]logvac.Drain, 0)
-	err := drainDB.Get("drainConfig", "drains", &tDrains)
+	err = drainDB.Get("drainConfig", "drains", &tDrains)
 	if err != nil && !strings.Contains(err.Error(), "No bucket found") {
 		return fmt.Errorf("Failed to load drain config - %s", err)
 	}
@@ -198,6 +198,12 @@ func AddDrain(d logvac.Drain) error {
 		return fmt.Errorf("Drain type not supported")
 	}
 
+	drainDB, err := NewBoltArchive(filepath.Join(dbDir, "drains.bolt"))
+	if err != nil {
+		return fmt.Errorf("Failed to initialize drain db - %s", err)
+	}
+	defer drainDB.Close()
+
 	drainDB.Save("drainConfig", "drains", drainCfg)
 
 	return nil
@@ -216,6 +222,12 @@ func RemoveDrain(drainType string) error {
 
 	delete(drains, drainType)
 	delete(drainCfg, drainType)
+
+	drainDB, err := NewBoltArchive(filepath.Join(dbDir, "drains.bolt"))
+	if err != nil {
+		return fmt.Errorf("Failed to initialize drain db - %s", err)
+	}
+	defer drainDB.Close()
 
 	return drainDB.Save("drainConfig", "drains", drainCfg)
 }
