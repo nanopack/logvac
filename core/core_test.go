@@ -89,7 +89,7 @@ func TestClose(t *testing.T) {
 }
 
 // writeDrain creates a drain from an io.Writer
-func writeDrain(writer io.Writer) logvac.Drain {
+func writeDrain(writer io.Writer) logvac.DrainFunc {
 	return func(msg logvac.Message) {
 		data, err := json.Marshal(msg)
 		if err != nil {

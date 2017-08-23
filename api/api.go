@@ -19,6 +19,7 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -37,6 +38,11 @@ func Start(collector http.HandlerFunc) error {
 	retriever := GenerateArchiveEndpoint(drain.Archiver)
 
 	router := pat.New()
+
+	router.Delete("/drains/{drainType}", handleRequest(deleteDrain))
+	router.Put("/drains/{drainType}", handleRequest(updateDrain))
+	router.Get("/drains", handleRequest(listDrains))
+	router.Post("/drains", handleRequest(addDrain))
 
 	router.Get("/add-token", handleRequest(addKey))
 	router.Get("/remove-token", handleRequest(removeKey))
@@ -182,4 +188,22 @@ func GenerateArchiveEndpoint(archive drain.ArchiverDrain) http.HandlerFunc {
 		res.WriteHeader(200)
 		res.Write(append(body, byte('\n')))
 	}
+}
+
+// parseBody parses the request into v
+func parseBody(req *http.Request, v interface{}) error {
+
+	b, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		return err
+	}
+	defer req.Body.Close()
+
+	config.Log.Trace("Parsed body - %s", b)
+
+	if err := json.Unmarshal(b, v); err != nil {
+		return err
+	}
+
+	return nil
 }
