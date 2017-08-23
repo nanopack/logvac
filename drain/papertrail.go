@@ -10,7 +10,7 @@ import (
 
 // Papertrail drain implements the publisher interface for publishing logs to papertrail.
 type Papertrail struct {
-	Conn io.WriteCloser
+	Conn io.WriteCloser // connection to forward logs through
 }
 
 // NewPapertrailClient creates a new mist publisher
@@ -20,12 +20,12 @@ func NewPapertrailClient(uri string) (*Papertrail, error) {
 		return nil, fmt.Errorf("Failed to resolve papertrail address - %s", err.Error())
 	}
 
-	Conn, err := net.DialUDP("udp", nil, addr)
+	conn, err := net.DialUDP("udp", nil, addr)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to dial papertrail - %s", err.Error())
 	}
 
-	return &Papertrail{Conn}, nil
+	return &Papertrail{conn}, nil
 }
 
 // Init initializes a connection to mist

@@ -360,3 +360,57 @@ func (a *BoltArchive) Expire() {
 		}
 	}
 }
+
+// Save writes a value to the database
+func (a *BoltArchive) Save(db, key string, v interface{}) error {
+	config.Log.Trace("Saving...")
+
+	err := a.db.Batch(func(tx *bolt.Tx) error {
+		bucket, err := tx.CreateBucketIfNotExists([]byte(db))
+		if err != nil {
+			return err
+		}
+
+		value, err := json.Marshal(v)
+		if err != nil {
+			return fmt.Errorf("Failed to marshal - %s", err.Error())
+		}
+
+		if err = bucket.Put([]byte(key), value); err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		err = fmt.Errorf("Save failed - %s", err)
+	}
+
+	return err
+}
+
+// Get gets values from the database
+func (a *BoltArchive) Get(db, key string, v interface{}) error {
+	// get all configs
+	err := a.db.View(func(tx *bolt.Tx) error {
+		bucket := tx.Bucket([]byte(db))
+		if bucket == nil {
+			return fmt.Errorf("No bucket found")
+		}
+
+		value := bucket.Get([]byte(key))
+		err := json.Unmarshal(value, &v)
+		if err != nil {
+			return fmt.Errorf("Bad JSON in stored drain config - %s", err.Error())
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		err = fmt.Errorf("Failed to get - %s", err)
+	}
+
+	return err
+}
