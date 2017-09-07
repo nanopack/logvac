@@ -44,7 +44,7 @@ type (
 		Type     string    `json:"type"` // Can be set if logs are submitted via http (deploy logs)
 		Priority int       `json:"priority"`
 		Content  string    `json:"message"`
-		Raw      []byte    `json:"raw"`
+		Raw      []byte    `json:"raw,omitempty"`
 	}
 
 	// Logvac defines the structure for the default logvac object

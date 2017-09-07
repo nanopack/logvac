@@ -170,6 +170,9 @@ func (a *BoltArchive) Slice(name, host string, tag []string, offset, end, limit 
 
 // Write writes the message to database
 func (a *BoltArchive) Write(msg logvac.Message) {
+	// don't archive raw stream
+	msg.Raw = []byte{}
+
 	config.Log.Trace("Bolt archive writing...")
 	err := a.db.Batch(func(tx *bolt.Tx) error {
 		bucket, err := tx.CreateBucketIfNotExists([]byte(msg.Type))
@@ -239,6 +242,7 @@ func (a *BoltArchive) Expire() {
 		case <-tick:
 			for bucketName, saveAmt := range logKeep { // todo: maybe rather/also loop through buckets
 				config.Log.Trace("bucketName - %s; saveAmt - %v", bucketName, saveAmt)
+				// todo: handle if someone specifies `{"app":"10000"}` (convert to int and fallthrough?)
 				switch saveAmt.(type) {
 				case string:
 					var expireTime = time.Now().UnixNano()
