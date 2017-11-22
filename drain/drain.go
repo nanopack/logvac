@@ -161,6 +161,7 @@ func InitDrains() error {
 
 	tDrains := make(map[string]logvac.Drain, 0)
 	err = drainDB.Get("drainConfig", "drains", &tDrains)
+	drainDB.Close()
 	if err != nil && !strings.Contains(err.Error(), "No bucket found") {
 		return fmt.Errorf("Failed to load drain config - %s", err)
 	}
@@ -177,6 +178,7 @@ func InitDrains() error {
 
 // AddDrain starts draining to a third party log service.
 func AddDrain(d logvac.Drain) error {
+
 	switch d.Type {
 	case "papertrail":
 		// if it already exists, close it and create a new one
@@ -198,6 +200,7 @@ func AddDrain(d logvac.Drain) error {
 		return fmt.Errorf("Drain type not supported")
 	}
 
+	// saving drain
 	drainDB, err := NewBoltArchive(filepath.Join(dbDir, "drains.bolt"))
 	if err != nil {
 		return fmt.Errorf("Failed to initialize drain db - %s", err)
