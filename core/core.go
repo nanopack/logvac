@@ -45,6 +45,7 @@ type (
 		Priority int       `json:"priority"`
 		Content  string    `json:"message"`
 		Raw      []byte    `json:"raw,omitempty"`
+		PubTries int       // number of publish attempts
 	}
 
 	// Logvac defines the structure for the default logvac object
