@@ -13,7 +13,6 @@ import (
 // Datadog drain implements the publisher interface for publishing logs to datadog.
 type Datadog struct {
 	connManager *ConnectionManager
-	Conn        io.WriteCloser // connection to forward logs through
 	Key         string         // api key
 }
 
@@ -24,17 +23,10 @@ func NewDatadogClient(key string) (*Datadog, error) {
 		return nil, fmt.Errorf("Failed to resolve datadog address - %s", err.Error())
 	}
 
-	// conn, err := net.DialTimeout("tcp", "intake.logs.datadoghq.com:10514", 20*time.Second)
-	// if err != nil {
-	// 	return nil, fmt.Errorf("Failed to dial datadog - %s", err.Error())
-	// }
-
 	cm := NewConnectionManager("intake.logs.datadoghq.com", 10514)
 	conn := cm.NewConnection()
 	cm.conn = conn
 
-	// go handleServerClose(conn)
-	// return &Datadog{Conn: conn, Key: key, connManager: cm}, nil
 	return &Datadog{Key: key, connManager: cm}, nil
 }
 
@@ -62,72 +54,6 @@ func handleServerClose(conn net.Conn) {
 }
 
 // Publish utilizes mist's Publish to "drain" a log message
-func (p *Datadog) Publish2(msg logvac.Message) {
-	msg.PubTries++
-	if p.Conn == nil {
-		fmt.Println("Redialing datadog")
-		conn, err := net.DialTimeout("tcp", "intake.logs.datadoghq.com:10514", 20*time.Second)
-		if err != nil {
-			if msg.PubTries <= 3 {
-				time.Sleep(2 * time.Second)
-				p.Publish(msg)
-			}
-			// return nil, fmt.Errorf("Failed to dial datadog - %s", err.Error())
-		}
-		p.Conn = conn
-		go handleServerClose(conn)
-	}
-
-	// ms := append(append([]byte(p.Key+" "), append(addExtra(), msg.Raw[4:]...)...), []byte("\n")...)
-	var ms []byte
-	if len(msg.Raw) > 4 {
-		ms = append(append([]byte(p.Key+" "), msg.Raw[4:]...), []byte("\n")...)
-	} else {
-		ms = append(append([]byte(p.Key+" "), msg.Raw...), []byte("\n")...)
-	}
-
-	fmt.Printf("Sending %s", ms)
-	// _, err := p.Conn.Write(append(append([]byte(p.Key+" "), append(addExtra(), msg.Raw[4:]...)...), []byte("\n")...))
-	_, err := p.Conn.Write(ms)
-	if err != nil {
-		fmt.Printf("Failed writing log - %s %d\n", err.Error(), msg.PubTries)
-		p.Conn.Close()
-		p.Conn = nil
-		if msg.PubTries <= 3 {
-			time.Sleep(2 * time.Second)
-			p.Publish(msg)
-		}
-	}
-}
-
-func (p *Datadog) Publish3(msg logvac.Message) {
-	msg.PubTries++
-
-	if p.Conn == nil {
-		fmt.Println("Redialing datadog")
-		p.Conn = p.connManager.NewConnection() // blocks until a new conn is ready
-	}
-
-	var ms []byte
-	if len(msg.Raw) > 4 {
-		ms = append(append([]byte(p.Key+" "), msg.Raw[4:]...), []byte("\n")...)
-	} else {
-		ms = append(append([]byte(p.Key+" "), msg.Raw...), []byte("\n")...)
-	}
-	fmt.Printf("Sending %s", ms)
-
-	_, err := p.Conn.Write(ms)
-	if err != nil {
-		fmt.Printf("Failed writing log - %s %d\n", err.Error(), msg.PubTries)
-		p.connManager.CloseConnection(p.Conn)
-		p.Conn = nil
-		if msg.PubTries <= 3 {
-			time.Sleep(2 * time.Second)
-			p.Publish(msg)
-		}
-	}
-}
-
 func (p *Datadog) Publish(msg logvac.Message) {
 	msg.PubTries++
 
@@ -142,7 +68,6 @@ func (p *Datadog) Publish(msg logvac.Message) {
 	} else {
 		ms = append(append([]byte(p.Key+" "), msg.Raw...), []byte("\n")...)
 	}
-	fmt.Printf("Sending %s", ms)
 
 	_, err := p.connManager.conn.Write(ms)
 	if err != nil {
@@ -153,7 +78,6 @@ func (p *Datadog) Publish(msg logvac.Message) {
 			time.Sleep(2 * time.Second)
 			p.Publish(msg)
 		}
-		// p.Publish(msg)
 	}
 }
 
