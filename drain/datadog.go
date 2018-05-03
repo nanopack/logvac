@@ -89,7 +89,7 @@ func (p *Datadog) Close() error {
 	return p.connManager.conn.Close()
 }
 
-// Adapted from datadog-log-agent
+// Adapted from datadog-log-agent (github.com/DataDog/datadog-agent/pkg/logs)
 const (
 	backoffSleepTimeUnit = 2  // in seconds
 	maxBackoffSleepTime  = 30 // in seconds
@@ -128,7 +128,7 @@ func (cm *ConnectionManager) NewConnection() net.Conn {
 			return cm.conn
 		}
 		fmt.Println("Connecting to the backend:", cm.connectionString)
-		cm.retries += 1
+		cm.retries++
 		outConn, err := net.DialTimeout("tcp", cm.connectionString, timeout)
 		if err != nil {
 			fmt.Println(err)
@@ -144,6 +144,7 @@ func (cm *ConnectionManager) NewConnection() net.Conn {
 
 // CloseConnection closes a connection on the client side
 func (cm *ConnectionManager) CloseConnection(conn io.Closer) {
+	cm.conn.Close()
 	conn.Close()
 }
 
