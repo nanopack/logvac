@@ -110,8 +110,8 @@ func (l *Logvac) addDrain(tag string, drain DrainFunc) {
 			case <-channels.done:
 				return
 			case msg := <-channels.send:
-				// todo: ensure mist plays nice with goroutine
-				go drain(msg)
+				// don't goroutine to preserve log order
+				drain(msg)
 			}
 		}
 	}()
