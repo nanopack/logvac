@@ -3,7 +3,9 @@
 package logvac
 
 import (
+	"fmt"
 	"io"
+	"net"
 	"sync"
 	"time"
 
@@ -45,7 +47,7 @@ type (
 		Priority int       `json:"priority"`
 		Content  string    `json:"message"`
 		Raw      []byte    `json:"raw,omitempty"`
-		PubTries int       // number of publish attempts
+		PubTries int       `json:"-"` // number of publish attempts
 	}
 
 	// Logvac defines the structure for the default logvac object
@@ -182,4 +184,87 @@ func (m *Message) Read(p []byte) (n int, err error) {
 		}
 	}
 	return
+}
+
+// "client" for writing logs to logvac
+
+// Writer provides an io.Writer compatible object to write logs to logvac.
+type Writer struct {
+	Tag  string // tag to use in tag field (including normal '[PID]')
+	Host string // host to use in host field
+
+	raddr  string         // host:port combo of logvac/syslog server
+	wTex   *sync.Mutex    // writer/connection's mutex
+	writer io.WriteCloser // writer to write logs to
+}
+
+// NewWriter initializes and returns a new Writer.
+func NewWriter(host, tag, addr string) (*Writer, error) {
+	w := Writer{
+		Tag:   tag,
+		Host:  host,
+		raddr: addr,
+		wTex:  &sync.Mutex{},
+	}
+
+	err := w.connect()
+
+	return &w, err
+}
+
+// getWriter gets and returns a writer.
+func (l *Writer) getWriter() (io.Writer, error) {
+	attempts := 0
+	if l.writer == nil {
+	retry:
+		err := l.connect()
+		if err != nil {
+			if attempts > 2 {
+				return nil, fmt.Errorf("Too many failures - %s", err.Error())
+			}
+			config.Log.Debug("Failed to connect - %s", err.Error())
+			time.Sleep(time.Second)
+			// limit retries
+			attempts++
+			goto retry
+		}
+	}
+	return l.writer, nil
+}
+
+// Write satisfies the io.Writer interface and writes to a writer (connection to syslog server).
+func (l *Writer) Write(p []byte) (int, error) {
+	if len(p) == 0 {
+		return 0, nil
+	}
+	l.wTex.Lock()
+	defer l.wTex.Unlock()
+
+	w, err := l.getWriter()
+	if err != nil {
+		config.Log.Debug("Failed to get writer - %s", err.Error())
+		return 0, err
+	}
+
+	_, err = fmt.Fprintf(w, "<11>%s %s %s: %s", time.Now().Format("Jan 02 15:04:05"), l.Host, l.Tag, p)
+	if err != nil {
+		config.Log.Debug("Failed to write - %s", err.Error())
+		return 0, err
+	}
+
+	return len(p), nil
+}
+
+// connet connects to the syslog server.
+func (l *Writer) connect() error {
+	if l.writer != nil {
+		l.writer.Close()
+		l.writer = nil
+	}
+
+	c, err := net.Dial("udp", l.raddr)
+	if err == nil {
+		l.writer = c
+	}
+	return err
 }
