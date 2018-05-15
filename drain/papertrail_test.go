@@ -27,7 +27,7 @@ func TestPTrailPublish(t *testing.T) {
 
 	trailTest.Publish(msg)
 	if b.String() != string(msg.Raw) {
-		t.Fatal("Failed to publish - '%s'", b.String())
+		t.Fatalf("Failed to publish - '%s'", b.String())
 	}
 	trailTest.Close()
 }

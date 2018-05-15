@@ -196,6 +196,21 @@ func AddDrain(d logvac.Drain) error {
 		}
 		drains["papertrail"] = pTrail
 		drainCfg["papertrail"] = d
+	case "datadog":
+		// if it already exists, close it and create a new one
+		if _, ok := drains["datadog"]; ok {
+			drains["datadog"].Close()
+		}
+		dDog, err := NewDatadogClient(d.AuthKey)
+		if err != nil {
+			return fmt.Errorf("Failed to create datadog client - %s", err)
+		}
+		err = dDog.Init()
+		if err != nil {
+			return fmt.Errorf("Datadog failed to initialize - %s", err)
+		}
+		drains["datadog"] = dDog
+		drainCfg["datadog"] = d
 	default:
 		return fmt.Errorf("Drain type not supported")
 	}
