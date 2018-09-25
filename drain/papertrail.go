@@ -43,8 +43,21 @@ func (p *Papertrail) Init() error {
 
 // Publish utilizes mist's Publish to "drain" a log message
 func (p *Papertrail) Publish(msg logvac.Message) {
-	config.Log.Info("%+v", msg)
-	p.Conn.Write(msg.Raw)
+	date := fmt.Sprintf("%s %02d %02d:%02d:%02d", 
+		msg.Time.Month().String()[:3],
+		msg.Time.Day(),
+		msg.Time.Hour(),
+		msg.Time.Minute(),
+		msg.Time.Second())
+	id := fmt.Sprintf("%s.%s", p.ID, msg.Id)
+	tag := msg.Tag[0]
+	
+	// the final message
+	message := fmt.Sprintf("<%d>%s %s %s: %s\n", 
+		msg.Priority, date, id, tag, msg.Content)
+	
+	config.Log.Info("%s", message)
+	p.Conn.Write([]byte(message))
 }
 
 // Close closes the connection to papertrail.
