@@ -5,6 +5,7 @@ import (
 	"io"
 	"net"
 
+	"github.com/nanopack/logvac/config"
 	"github.com/nanopack/logvac/core"
 )
 
@@ -24,12 +25,14 @@ func NewPapertrailClient(uri string) (*Papertrail, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Failed to dial papertrail - %s", err.Error())
 	}
+	
+	config.Log.Info("Connection to papertrail endpoint established")
 
 	return &Papertrail{conn}, nil
 }
 
 // Init initializes a connection to mist
-func (p Papertrail) Init() error {
+func (p *Papertrail) Init() error {
 
 	// add drain
 	logvac.AddDrain("papertrail", p.Publish)
@@ -38,7 +41,7 @@ func (p Papertrail) Init() error {
 }
 
 // Publish utilizes mist's Publish to "drain" a log message
-func (p Papertrail) Publish(msg logvac.Message) {
+func (p *Papertrail) Publish(msg logvac.Message) {
 	p.Conn.Write(msg.Raw)
 }
 
