@@ -20,6 +20,7 @@ func NewPapertrailClient(uri string) (*Papertrail, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Failed to resolve papertrail address - %s", err.Error())
 	}
+	config.Log.Info("Papertrail address resolved IP: %s - Port: %d", addr.IP, addr.Port)
 
 	conn, err := net.DialUDP("udp", nil, addr)
 	if err != nil {
