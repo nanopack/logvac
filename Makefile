@@ -11,4 +11,5 @@ build:
 	@go build --ldflags=$(LDFLAGS) -o $(DIST_DIR)/logvac main.go
 	
 deps:
+	@go get -v github.com/mitchellh/gox
 	@go get -t -v ./...

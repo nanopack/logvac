@@ -42,6 +42,7 @@ func (p *Papertrail) Init() error {
 
 // Publish utilizes mist's Publish to "drain" a log message
 func (p *Papertrail) Publish(msg logvac.Message) {
+	config.Log.Info("Write 'papertrail' -> %s", msg.Raw)
 	p.Conn.Write(msg.Raw)
 }
 
