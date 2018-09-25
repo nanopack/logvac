@@ -16,6 +16,7 @@ type Papertrail struct {
 
 // NewPapertrailClient creates a new mist publisher
 func NewPapertrailClient(uri string) (*Papertrail, error) {
+	config.Log.Info("Papertrail URI: %s", uri)
 	addr, err := net.ResolveUDPAddr("udp", uri)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to resolve papertrail address - %s", err.Error())
