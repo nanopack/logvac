@@ -56,7 +56,6 @@ func (p *Papertrail) Publish(msg logvac.Message) {
 	message := fmt.Sprintf("<%d>%s %s %s: %s\n", 
 		msg.Priority, date, id, tag, msg.Content)
 	
-	config.Log.Info("%s", message)
 	p.Conn.Write([]byte(message))
 }
 
