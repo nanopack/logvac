@@ -59,6 +59,7 @@ type (
 	Drain struct {
 		Type       string `json:"type"`             // type of service ("papertrail")
 		URI        string `json:"endpoint"`         // uri of endpoint "log6.papertrailapp.com:199900"
+		ID				 string	`json:"id"`								// id to identify this app with external logger
 		AuthKey    string `json:"key,omitempty"`    // key or user for authentication
 		AuthSecret string `json:"secret,omitempty"` // password or secret for authentication
 	}

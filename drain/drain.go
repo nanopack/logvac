@@ -191,7 +191,7 @@ func AddDrain(d logvac.Drain) error {
 			drains["papertrail"].Close()
 		}
 		// pTrail, err := NewPapertrailClient("logs6.papertrailapp.com:19900")
-		pTrail, err := NewPapertrailClient(d.URI)
+		pTrail, err := NewPapertrailClient(d.URI, d.ID)
 		if err != nil {
 			return fmt.Errorf("Failed to create papertrail client - %s", err)
 		}
