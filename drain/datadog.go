@@ -60,7 +60,6 @@ func (p *Datadog) Publish(msg logvac.Message) {
 
   // generate the payload for this entry
   payload := formatDataDogMessage(msg, p.ID, p.Key)
-  fmt.Println(string(payload[:]))
 
   // send the payload
 	_, err := p.conn.Write(payload)
@@ -105,6 +104,9 @@ func formatDataDogMessage(msg logvac.Message, id, key string) []byte {
   // the final message
   message := fmt.Sprintf("%s <%d>%s %s %s: %s\n", 
     key, msg.Priority, date, hostname, tag, msg.Content)
+  
+  fmt.Println(key)
+  fmt.Println(message)
   
   // return the message as a byte array
   return []byte(message)
