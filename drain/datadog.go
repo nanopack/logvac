@@ -60,6 +60,7 @@ func (p *Datadog) Publish(msg logvac.Message) {
 
   // generate the payload for this entry
   payload := formatDataDogMessage(msg, p.ID, p.Key)
+  fmt.Println(string(payload[:]))
 
   // send the payload
 	_, err := p.conn.Write(payload)
