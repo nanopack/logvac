@@ -54,7 +54,6 @@ func (p *Datadog) Publish(msg logvac.Message) {
 
   // re-establish the connection if it's been closed
 	if p.conn == nil {
-    fmt.Println("Establishing connection with datadog endpoint")
 		p.conn = p.manager.NewConnection() // doesn't block (don't goroutine call to Publish)
 	}
 
@@ -64,7 +63,6 @@ func (p *Datadog) Publish(msg logvac.Message) {
   // send the payload
 	_, err := p.conn.Write(payload)
 	if err != nil {
-    fmt.Println("Failed to send payload")
     // it's possible the connection is bad, so let's close it
 		p.manager.CloseConnection(p.conn)
 		p.conn = nil
