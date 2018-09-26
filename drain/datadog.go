@@ -22,7 +22,7 @@ type Datadog struct {
 // NewDatadogClient creates a new mist publisher
 func NewDatadogClient(id, key string) (*Datadog, error) {
   // emulate the server config
-  config := config.NewServerConfig("intake.logs.datadoghq.com", 10514, true)
+  config := config.NewServerConfig("agent-443-intake.logs.datadoghq.com", 443, true)
 
   // initialize a connection manager
 	manager := sender.NewConnectionManager(config, "")
