@@ -1,74 +1,108 @@
 package drain
 
-// import (
-// 	"fmt"
-// 	"net"
-// 	"time"
-// 
-// 	"github.com/DataDog/datadog-agent/pkg/logs/sender"
-// 
-// 	"github.com/nanopack/logvac/core"
-// )
-// 
-// // Datadog drain implements the publisher interface for publishing logs to datadog.
-// type Datadog struct {
-// 	connManager *sender.ConnectionManager
-// 	Conn        net.Conn
-// 	Key         string // datadog api key
-// }
-// 
-// // NewDatadogClient creates a new mist publisher
-// func NewDatadogClient(key string) (*Datadog, error) {
-// 	_, err := net.ResolveTCPAddr("tcp", "intake.logs.datadoghq.com:10514")
-// 	if err != nil {
-// 		return nil, fmt.Errorf("Failed to resolve datadog address - %s", err.Error())
-// 	}
-// 
-// 	cm := sender.NewConnectionManager("intake.logs.datadoghq.com", 10514, true)
-// 	conn := cm.NewConnection()
-// 
-// 	return &Datadog{Key: key, connManager: cm, Conn: conn}, nil
-// }
-// 
-// // Init initializes a connection to mist
-// func (p Datadog) Init() error {
-// 
-// 	// add drain
-// 	logvac.AddDrain("datadog", p.Publish)
-// 
-// 	return nil
-// }
-// 
-// // Publish utilizes mist's Publish to "drain" a log message
-// func (p *Datadog) Publish(msg logvac.Message) {
-// 	msg.PubTries++
-// 
-// 	if p.Conn == nil {
-// 		fmt.Println("Redialing datadog")
-// 		p.Conn = p.connManager.NewConnection() // doesn't block (don't goroutine call to Publish)
-// 	}
-// 
-// 	var ms []byte
-// 	if len(msg.Raw) > 4 {
-// 		ms = append(append([]byte(p.Key+" "), msg.Raw[4:]...), []byte("\n")...)
-// 	} else {
-// 		ms = append(append([]byte(p.Key+" "), msg.Raw...), []byte("\n")...)
-// 	}
-// 
-// 	_, err := p.Conn.Write(ms)
-// 	if err != nil {
-// 		fmt.Printf("Failed writing log - %s %d\n", err.Error(), msg.PubTries)
-// 		p.connManager.CloseConnection(p.Conn)
-// 		p.Conn = nil
-// 		if msg.PubTries <= 3 {
-// 			time.Sleep(2 * time.Second)
-// 			p.Publish(msg)
-// 		}
-// 	}
-// }
-// 
-// // Close closes the connection to datadog.
-// func (p *Datadog) Close() error {
-// 	p.connManager.CloseConnection(p.Conn)
-// 	return nil
-// }
+import (
+	"fmt"
+	"net"
+	"time"
+
+  "github.com/DataDog/datadog-agent/pkg/logs/config"
+	"github.com/DataDog/datadog-agent/pkg/logs/sender"
+
+	"github.com/nanopack/logvac/core"
+)
+
+// Datadog drain implements the publisher interface for publishing logs to datadog.
+type Datadog struct {
+  ID        string // app ID or name
+  Key       string // datadog api key
+	manager   *sender.ConnectionManager
+	conn      net.Conn
+}
+
+// NewDatadogClient creates a new mist publisher
+func NewDatadogClient(id, key string) (*Datadog, error) {
+  // emulate the server config
+  config := config.NewServerConfig("intake.logs.datadoghq.com", 10514, true)
+
+  // initialize a connection manager
+	manager := sender.NewConnectionManager(config, "")
+  
+  // establish a connection
+	conn := manager.NewConnection()
+
+	return &Datadog{
+    ID:       id,
+    Key:      key,
+    manager:  manager, 
+    conn:     conn,
+  }, nil
+}
+
+// Init initializes a connection to mist
+func (p Datadog) Init() error {
+
+	// add drain
+	logvac.AddDrain("datadog", p.Publish)
+
+	return nil
+}
+
+// Publish utilizes mist's Publish to "drain" a log message
+func (p *Datadog) Publish(msg logvac.Message) {
+  // keep track of the attempts
+	msg.PubTries++
+
+  // re-establish the connection if it's been closed
+	if p.conn == nil {
+		p.conn = p.manager.NewConnection() // doesn't block (don't goroutine call to Publish)
+	}
+
+  // generate the payload for this entry
+  payload := formatDataDogMessage(msg, p.ID, p.Key)
+
+  // send the payload
+	_, err := p.conn.Write(payload)
+	if err != nil {
+    // it's possible the connection is bad, so let's close it
+		p.manager.CloseConnection(p.conn)
+		p.conn = nil
+    
+    // let's try to send it again (at least 3 times)
+		if msg.PubTries <= 3 {
+      // give it a sec, networks are fickle
+			time.Sleep(2 * time.Second)
+      // retry!
+			p.Publish(msg)
+		}
+	}
+}
+
+// Close closes the connection to datadog.
+func (p *Datadog) Close() error {
+	p.manager.CloseConnection(p.conn)
+	return nil
+}
+
+// format the syslog message, prefixed with the datadog api key
+func formatDataDogMessage(msg logvac.Message, id, key string) []byte {
+  // format the date in the proper syslog format
+  date := fmt.Sprintf("%s %02d %02d:%02d:%02d", 
+    msg.Time.Month().String()[:3],
+    msg.Time.Day(),
+    msg.Time.Hour(),
+    msg.Time.Minute(),
+    msg.Time.Second())
+  
+  // prefix the app id to the hostname identifier
+  hostname := fmt.Sprintf("%s.%s", id, msg.Id)
+  
+  // extract the first tag as the tag (ie: nginx[access])
+  tag := msg.Tag[0]
+  
+  // the final message
+  message := fmt.Sprintf("%s <%d>%s %s %s: %s\n", 
+    key, msg.Priority, date, hostname, tag, msg.Content)
+  
+  // return the message as a byte array
+  return []byte(message)
+}
