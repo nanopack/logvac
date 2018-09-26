@@ -88,12 +88,7 @@ func (p *Datadog) Close() error {
 // format the syslog message, prefixed with the datadog api key
 func formatDataDogMessage(msg logvac.Message, id, key string) []byte {
   // format the date in the proper syslog format
-  date := fmt.Sprintf("%s %02d %02d:%02d:%02d", 
-    msg.Time.Month().String()[:3],
-    msg.Time.Day(),
-    msg.Time.Hour(),
-    msg.Time.Minute(),
-    msg.Time.Second())
+  date := msg.Time.Format(time.RFC3339)
   
   // prefix the app id to the hostname identifier
   hostname := fmt.Sprintf("%s.%s", id, msg.Id)
@@ -102,11 +97,8 @@ func formatDataDogMessage(msg logvac.Message, id, key string) []byte {
   tag := msg.Tag[0]
   
   // the final message
-  message := fmt.Sprintf("%s <%d>%s %s %s: %s\n", 
+  message := fmt.Sprintf("%s <%d>1 %s %s %s - - - %s\n", 
     key, msg.Priority, date, hostname, tag, msg.Content)
-  
-  fmt.Println(key)
-  fmt.Println(message)
   
   // return the message as a byte array
   return []byte(message)
