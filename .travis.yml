@@ -1,5 +1,10 @@
 language: go
 go: "1.10"
 
+
+before_install:
+  - go get github.com/kardianos/govendor
+  - govendor sync
+
 install: go get -t -v ./...
 script: go test -v ./...
