@@ -32,4 +32,5 @@ logvac.json
 *.cover*
 db
 vendor/*/
-
+*.secret
+dist

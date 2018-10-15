@@ -1,0 +1,12 @@
+version: '3.1'
+
+services:
+  dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/go/src/github.com/nanopack/logvac
+    env_file:
+      - '.env'
+      - '.env.secret'

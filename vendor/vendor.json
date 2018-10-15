@@ -9,6 +9,13 @@
 			"revisionTime": "2016-01-02T14:47:48Z"
 		},
 		{
+			"checksumSHA1": "BxrtM5J14pvZdSSRant47bMXf5U=",
+			"path": "github.com/DataDog/datadog-agent",
+			"revision": "b0407a814984daef10b504629cbac4d3aded065f",
+			"revisionTime": "2018-09-19T16:08:52Z",
+			"tree": true
+		},
+		{
 			"checksumSHA1": "R1Q34Pfnt197F/nCOO9kG8c+Z90=",
 			"path": "github.com/boltdb/bolt",
 			"revision": "2f1ce7a837dcb8da3ec595b1dac9d0632f0f99e8",
@@ -123,7 +130,7 @@
 			"revisionTime": "2016-08-06T14:40:29Z"
 		},
 		{
-			"checksumSHA1": "xppHi82MLqVx1eyQmbhTesAEjx8=",
+			"checksumSHA1": "KzsJ/GkPEyvxG8eBcKrHRFoPhzU=",
 			"path": "github.com/lib/pq/oid",
 			"revision": "80f8150043c80fb52dee6bc863a709cdac7ec8f8",
 			"revisionTime": "2016-08-06T14:40:29Z"
@@ -141,15 +148,15 @@
 			"revisionTime": "2015-07-17T05:11:58Z"
 		},
 		{
-			"checksumSHA1": "AOLvFf4xJDu0dt3Q8mHw6lSM/+U=",
+			"checksumSHA1": "1GRIFd6tEXuuQll7oav7S3UdYE0=",
 			"path": "github.com/nanobox-io/golang-nanoauth",
 			"revision": "d48ad8ddeaf0cc843f887bbb78cd05e79cc1d669",
 			"revisionTime": "2016-10-26T18:18:52Z"
 		},
 		{
-			"checksumSHA1": "1gZkgzbf7x6HZrpNrlTO/vArDm8=",
+			"checksumSHA1": "7dFO8xO/7gykBP4iEF6XQgdwLaU=",
 			"path": "github.com/nanobox-io/golang-scribble",
-			"revision": "ba402b659c4d12e92ebae63d37560a045a158544",
+			"revision": "e8f97ab32140fe491d863b756484849528378b17",
 			"revisionTime": "2017-02-27T16:09:49Z"
 		},
 		{
@@ -225,7 +232,7 @@
 			"revisionTime": "2016-05-08T18:07:13Z"
 		},
 		{
-			"checksumSHA1": "CoRxz7vk573Zu/UcMS4PzpAsv3w=",
+			"checksumSHA1": "5avFIs67Fl7j8WRPu40kTp8sfmo=",
 			"path": "golang.org/x/sys/unix",
 			"revision": "b776ec39b3e54652e09028aaaaac9757f4f8211a",
 			"revisionTime": "2016-04-21T02:29:30Z"

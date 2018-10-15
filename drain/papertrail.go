@@ -5,16 +5,18 @@ import (
 	"io"
 	"net"
 
+	"github.com/nanopack/logvac/config"
 	"github.com/nanopack/logvac/core"
 )
 
 // Papertrail drain implements the publisher interface for publishing logs to papertrail.
 type Papertrail struct {
-	Conn io.WriteCloser // connection to forward logs through
+	ID		string				 // the app id or name
+	Conn 	io.WriteCloser // connection to forward logs through
 }
 
 // NewPapertrailClient creates a new mist publisher
-func NewPapertrailClient(uri string) (*Papertrail, error) {
+func NewPapertrailClient(uri, id string) (*Papertrail, error) {
 	addr, err := net.ResolveUDPAddr("udp", uri)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to resolve papertrail address - %s", err.Error())
@@ -24,12 +26,14 @@ func NewPapertrailClient(uri string) (*Papertrail, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Failed to dial papertrail - %s", err.Error())
 	}
+	
+	config.Log.Info("Connection to papertrail endpoint established")
 
-	return &Papertrail{conn}, nil
+	return &Papertrail{Conn: conn, ID: id}, nil
 }
 
 // Init initializes a connection to mist
-func (p Papertrail) Init() error {
+func (p *Papertrail) Init() error {
 
 	// add drain
 	logvac.AddDrain("papertrail", p.Publish)
@@ -38,8 +42,21 @@ func (p Papertrail) Init() error {
 }
 
 // Publish utilizes mist's Publish to "drain" a log message
-func (p Papertrail) Publish(msg logvac.Message) {
-	p.Conn.Write(msg.Raw)
+func (p *Papertrail) Publish(msg logvac.Message) {
+	date := fmt.Sprintf("%s %02d %02d:%02d:%02d", 
+		msg.Time.Month().String()[:3],
+		msg.Time.Day(),
+		msg.Time.Hour(),
+		msg.Time.Minute(),
+		msg.Time.Second())
+	id := fmt.Sprintf("%s.%s", p.ID, msg.Id)
+	tag := msg.Tag[0]
+	
+	// the final message
+	message := fmt.Sprintf("<%d>%s %s %s: %s\n", 
+		msg.Priority, date, id, tag, msg.Content)
+	
+	p.Conn.Write([]byte(message))
 }
 
 // Close closes the connection to papertrail.

@@ -70,6 +70,7 @@ func Init() error {
 	if err != nil {
 		return fmt.Errorf("Failed to load drains - %s", err)
 	}
+	config.Log.Info("3rd-party drains initialized")
 
 	return nil
 }
@@ -153,11 +154,13 @@ func publishInit() error {
 
 // InitDrains loads and configures drains from a config file.
 func InitDrains() error {
+	config.Log.Info("loading drains from db")
 	drainDB, err := NewBoltArchive(filepath.Join(dbDir, "drains.bolt"))
 	if err != nil {
 		return fmt.Errorf("Failed to initialize drain db - %s", err)
 	}
 	defer drainDB.Close()
+	config.Log.Info("drains loaded from db")
 
 	tDrains := make(map[string]logvac.Drain, 0)
 	err = drainDB.Get("drainConfig", "drains", &tDrains)
@@ -169,7 +172,7 @@ func InitDrains() error {
 	for i := range tDrains {
 		err := AddDrain(tDrains[i])
 		if err != nil {
-			return fmt.Errorf("Failed to load drain 'papertrail' - %s", err)
+			return fmt.Errorf("Failed to load 3rd-party drain '%s' - %s", i, err)
 		}
 	}
 
@@ -179,6 +182,8 @@ func InitDrains() error {
 // AddDrain starts draining to a third party log service.
 func AddDrain(d logvac.Drain) error {
 
+	config.Log.Info("Adding drain '%s'", d.Type)
+
 	switch d.Type {
 	case "papertrail":
 		// if it already exists, close it and create a new one
@@ -186,7 +191,7 @@ func AddDrain(d logvac.Drain) error {
 			drains["papertrail"].Close()
 		}
 		// pTrail, err := NewPapertrailClient("logs6.papertrailapp.com:19900")
-		pTrail, err := NewPapertrailClient(d.URI)
+		pTrail, err := NewPapertrailClient(d.URI, d.ID)
 		if err != nil {
 			return fmt.Errorf("Failed to create papertrail client - %s", err)
 		}
@@ -196,12 +201,13 @@ func AddDrain(d logvac.Drain) error {
 		}
 		drains["papertrail"] = pTrail
 		drainCfg["papertrail"] = d
+		config.Log.Info("3rd-party drain 'papertrail' initialized")
 	case "datadog":
 		// if it already exists, close it and create a new one
 		if _, ok := drains["datadog"]; ok {
 			drains["datadog"].Close()
 		}
-		dDog, err := NewDatadogClient(d.AuthKey)
+		dDog, err := NewDatadogClient(d.ID, d.AuthKey)
 		if err != nil {
 			return fmt.Errorf("Failed to create datadog client - %s", err)
 		}
