@@ -1,8 +1,5 @@
-[![logvac logo](http://nano-assets.gopagoda.io/readme-headers/logvac.png)](http://nanobox.io/open-source#logvac)  
-[![Build Status](https://travis-ci.org/nanopack/logvac.svg)](https://travis-ci.org/nanopack/logvac)
-[![GoDoc](https://godoc.org/github.com/nanopack/logvac?status.svg)](https://godoc.org/github.com/nanopack/logvac)
-
 # Logvac
+[![GoDoc](https://godoc.org/github.com/nanopack/logvac?status.svg)](https://godoc.org/github.com/nanopack/logvac)
 
 Simple, lightweight, api-driven log aggregation service with realtime push capabilities and historical persistence.
 
