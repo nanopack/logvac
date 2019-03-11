@@ -126,8 +126,3 @@ See http examples [here](./api/README.md)
 
 Contributions to the logvac project are welcome and encouraged. Logvac is a [Nanobox](https://nanobox.io) project and contributions should follow the [Nanobox Contribution Process & Guidelines](https://docs.nanobox.io/contributing/).
 
-## Licence
-
-Mozilla Public License Version 2.0
-
-[![open source](http://nano-assets.gopagoda.io/open-src/nanobox-open-src.png)](http://nanobox.io/open-source)
