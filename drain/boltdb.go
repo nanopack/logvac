@@ -362,7 +362,7 @@ func (a *BoltArchive) Expire() {
 				}
 			} // range logKeep
 		case <-a.Done:
-			config.Log.Debug("Done recieved on channel. (Cleanup halting)")
+			config.Log.Debug("Done received on channel. (Cleanup halting)")
 			return
 		}
 	}
